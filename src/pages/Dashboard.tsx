@@ -26,7 +26,7 @@ export default function Dashboard() {
 
     // Functions untuk Shopping List
     const addShoppingItem = () => {
-        if (newItem.trim()) {
+        if ((newItem ?? '').trim()) {
             setShoppingItems([
                 ...shoppingItems,
                 {

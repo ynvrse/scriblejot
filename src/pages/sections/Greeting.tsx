@@ -1,34 +1,5 @@
-import { init } from '@instantdb/react';
+import { useUserProfile } from '@/hooks/useUserProfile';
 import { useEffect, useState } from 'react';
-
-const APP_ID = 'b31ef944-da66-44be-a7dc-f5daae90fa61';
-const db = init({ appId: APP_ID });
-
-// Hook untuk mendapatkan profil user
-function useUserProfile() {
-    const { user } = db.useAuth();
-
-    const { isLoading, error, data } = db.useQuery(
-        user
-            ? {
-                  profiles: {
-                      $: {
-                          where: {
-                              id: user.id,
-                          },
-                      },
-                  },
-              }
-            : null,
-    );
-
-    return {
-        user,
-        profile: data?.profiles?.[0],
-        isLoading,
-        error,
-    };
-}
 
 export function getTimeGreeting() {
     const hour = new Date().getHours();

@@ -312,7 +312,7 @@ export default function NotesSection() {
     }, [commentsQuery.data?.comments]);
 
     const addNote = useCallback(async () => {
-        if (!newNote.content.trim() || !user || !currentProfile) return;
+        if (!(newNote.content ?? '').trim() || !user || !currentProfile) return;
 
         try {
             const noteId = id();
@@ -334,7 +334,7 @@ export default function NotesSection() {
     }, [newNote, user, currentProfile]);
 
     const updateNote = useCallback(async () => {
-        if (!editingNote || !editingNote.content.trim()) return;
+        if (!editingNote || !(editingNote.content ?? '').trim()) return;
 
         try {
             await db.transact([
@@ -379,7 +379,7 @@ export default function NotesSection() {
     const addComment = useCallback(
         async (e: React.FormEvent) => {
             e.preventDefault();
-            if (!selectedNote || !newComment.trim() || !user || !currentProfile) return;
+            if (!selectedNote || !(newComment ?? '').trim() || !user || !currentProfile) return;
 
             try {
                 const commentId = id();
@@ -487,7 +487,7 @@ export default function NotesSection() {
                         </div>
 
                         <div className="flex gap-2">
-                            <Button onClick={addNote} size="sm" disabled={!newNote.content.trim()}>
+                            <Button onClick={addNote} size="sm" disabled={!(newNote.content ?? '').trim()}>
                                 <Icons.Check size={16} className="mr-1" />
                                 Simpan
                             </Button>
@@ -696,7 +696,7 @@ export default function NotesSection() {
                                                 className="w-full rounded border p-2 text-sm focus:ring focus:outline-none"
                                             />
                                             <div className="mt-2 flex justify-end">
-                                                <Button size="sm" type="submit" disabled={!newComment.trim()}>
+                                                <Button size="sm" type="submit" disabled={!newComment?.trim()}>
                                                     Kirim
                                                 </Button>
                                             </div>

@@ -70,12 +70,12 @@ export default function ChoresSection() {
 
     const saveChore = () => {
         const choreData = editingChore ?? newChore;
-        const isValid = choreData.title.trim() && (choreData.isToday ? true : !!choreData.dueDate);
+        const isValid = (choreData.title || '').trim() && (choreData.isToday ? true : !!choreData.dueDate);
 
         if (!isValid) return;
 
         // Pakai default '00:00' kalau dueTime kosong
-        const safeDueTime = choreData.dueTime.trim() || '00:00';
+        const safeDueTime = (choreData.dueTime || '00:00').trim();
 
         if (editingChore) {
             setChores((prev) =>
