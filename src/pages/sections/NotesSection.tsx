@@ -17,8 +17,8 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 type Comment = {
     id: string;
     content: string;
-    createdAt: Date | string;
-    updatedAt?: Date | string;
+    createdAt: Date;
+    updatedAt?: Date;
     commentAuthor: {
         id: string;
         firstName?: string;
@@ -26,7 +26,7 @@ type Comment = {
         fullName?: string;
         profilePicture?: string;
         email?: string;
-    };
+    }[];
 };
 
 type Note = {
@@ -35,16 +35,16 @@ type Note = {
     content: string;
     isPublic?: boolean;
     tags?: any;
-    createdAt: Date | string;
-    updatedAt?: Date | string;
-    noteAuthor: Array<{
+    createdAt: Date;
+    updatedAt?: Date;
+    noteAuthor: {
         id: string;
         firstName?: string;
         lastName?: string;
         fullName?: string;
         profilePicture?: string;
         email?: string;
-    }>;
+    }[];
     noteComments: Comment[];
 };
 
@@ -192,7 +192,7 @@ const CommentItem = memo(({ comment, currentProfileId }: { comment: Comment; cur
                 <Avatar className="h-8 w-8">
                     <AvatarImage src={comment.commentAuthor?.[0]?.profilePicture} />
                     <AvatarFallback>
-                        {comment.commentAuthor?.fullName?.[0] || comment.commentAuthor?.firstName?.[0] || 'U'}
+                        <Icons.User />
                     </AvatarFallback>
                 </Avatar>
             )}
@@ -204,8 +204,8 @@ export default function NotesSection() {
     const { user, profile: currentProfile } = useUserProfile();
     const [showAddNote, setShowAddNote] = useState(false);
     const [editingMode, setEditingMode] = useState(false);
-    const [selectedNote, setSelectedNote] = useState<Note | null>(null);
-    const [editingNote, setEditingNote] = useState<Note | null>(null);
+    const [selectedNote, setSelectedNote] = useState<any>(null);
+    const [editingNote, setEditingNote] = useState<any>(null);
     const [newNote, setNewNote] = useState({ title: '', content: '', isPublic: false });
     const [newComment, setNewComment] = useState('');
 
@@ -283,7 +283,7 @@ export default function NotesSection() {
 
     // Memoize filtered notes
     const filteredNotes = useMemo(() => {
-        return parsedNotes.filter((note) => note.isPublic || note.noteAuthor?.[0]?.id === currentProfile?.id);
+        return parsedNotes.filter((note) => note.isPublic || note.noteAuthor?.id === currentProfile?.id);
     }, [parsedNotes, currentProfile?.id]);
 
     // Memoize current user info
@@ -504,7 +504,7 @@ export default function NotesSection() {
                 <EmptyState onAddNote={handleShowAddNote} disabled={!user} />
             ) : (
                 <div className="scrollbar-hide flex space-x-4 overflow-x-auto pb-4">
-                    {filteredNotes.map((note: Note) => (
+                    {filteredNotes.map((note: any) => (
                         <NoteCard key={note.id} note={note} onSelect={handleNoteSelect} />
                     ))}
                 </div>

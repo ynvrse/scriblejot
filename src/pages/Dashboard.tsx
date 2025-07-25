@@ -6,10 +6,10 @@ import { Check, Plus, ShoppingCart, X } from 'lucide-react';
 import { useState } from 'react';
 import Login from './Login';
 import ChoresSection from './sections/ChoresSection';
-import NotesSection from './sections/NotesSection';
 
 import db from '@/hooks/useIDB';
 import Greeting from './sections/Greeting';
+import NoteSection from './sections/NotesSection';
 
 export default function Dashboard() {
     const { isLoading, user, error } = db.useAuth();
@@ -72,7 +72,7 @@ export default function Dashboard() {
                 <Greeting />
 
                 {/* Notes Section */}
-                <NotesSection />
+                <NoteSection />
 
                 {/* Chores Section */}
                 <ChoresSection />
