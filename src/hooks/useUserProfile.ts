@@ -9,7 +9,7 @@ export const useUserProfile = () => {
                   profiles: {
                       $: {
                           where: {
-                              id: user.id,
+                              userId: user.id,
                           },
                       },
                   },
@@ -21,7 +21,6 @@ export const useUserProfile = () => {
 
     return {
         user,
-
         profile,
         isLoading: authLoading || queryLoading,
         error,

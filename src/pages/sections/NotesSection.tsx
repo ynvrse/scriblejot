@@ -285,7 +285,7 @@ export default function NotesSection() {
     const filteredNotes = useMemo(() => {
         return parsedNotes.filter((note) => {
             const author = Array.isArray(note.noteAuthor) ? note.noteAuthor[0] : note.noteAuthor;
-            console.log(author?.id);
+
             return note.isPublic || author?.id === currentProfile?.id;
         });
     }, [parsedNotes, currentProfile?.id]);

@@ -28,8 +28,6 @@ export function useGoogleOAuth() {
 
     const { isLoading, error, data } = db.useQuery(query);
 
-    const ids = data?.profiles?.map((p) => p.id) ?? [];
-
     const handleGoogleSuccess = async ({ credential }: { credential?: string }) => {
         try {
             if (!credential) throw new Error('No credential received');
@@ -42,17 +40,20 @@ export function useGoogleOAuth() {
                 nonce,
             });
 
-            const existingUser = ids.includes(user.id);
+            // Cek apakah user sudah ada berdasarkan userId, bukan entity id
+            const profiles = data?.profiles ?? [];
+            const existingUser = profiles.find((p) => p.userId === user.id);
 
             if (!existingUser) {
+                // Gunakan ID yang di-generate otomatis, bukan user.id
                 await db.transact([
-                    db.tx.profiles[user.id].create({
-                        id: user.id,
-                        firstName: parsed.given_name,
-                        lastName: parsed.family_name,
-                        fullName: parsed.name,
-                        profilePicture: parsed.picture,
-                        email: parsed.email,
+                    db.tx.profiles[crypto.randomUUID()].create({
+                        userId: user.id, // Simpan user.id sebagai field terpisah
+                        firstName: parsed.given_name || '',
+                        lastName: parsed.family_name || '',
+                        fullName: parsed.name || '',
+                        profilePicture: parsed.picture || '',
+                        email: parsed.email || '',
                         createdAt: new Date().toISOString(),
                         updatedAt: new Date().toISOString(),
                     }),
