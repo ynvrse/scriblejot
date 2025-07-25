@@ -16,17 +16,7 @@ type Chore = {
     isToday: boolean;
 };
 
-const initialChores: Chore[] = [
-    {
-        id: 1,
-        title: 'Cuci Piring',
-        dueDate: '2025-07-25',
-        dueTime: '14:30',
-        completed: false,
-        icon: 'Utensils',
-        isToday: true,
-    },
-];
+const initialChores: Chore[] = [];
 
 const availableIcons = [
     { name: 'Utensils', label: 'Kitchen' },
