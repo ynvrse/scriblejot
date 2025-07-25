@@ -514,10 +514,10 @@ export default function NotesSection() {
             {selectedNote && (
                 <div
                     ref={modalRef}
-                    className="modal-content fixed inset-0 z-50 flex items-center justify-center bg-black/50 sm:p-4"
+                    className="modal-content fixed inset-0 z-50 flex bg-white sm:items-center sm:justify-center sm:bg-black/50 sm:p-4"
                 >
                     {/* Mobile-first Card - Full height on mobile */}
-                    <Card className="scrollbar-hide flex h-full w-full flex-col overflow-hidden rounded-none bg-white sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-lg">
+                    <Card className="scrollbar-hide flex h-full w-full flex-col overflow-hidden border-0 bg-white shadow-none sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-lg sm:border sm:shadow-lg">
                         {/* Fixed Header - always visible */}
                         <div className="flex shrink-0 items-center justify-between border-b bg-white p-4 sm:p-6">
                             <h3 className="text-lg font-semibold">Detail Catatan</h3>
@@ -721,9 +721,9 @@ export default function NotesSection() {
                             </div>
                         </div>
 
-                        {/* Fixed Comment Form - always visible at bottom */}
+                        {/* Fixed Comment Form - positioned above keyboard on mobile */}
                         {user && (
-                            <div className="shrink-0 border-t bg-white p-4">
+                            <div className="shrink-0 border-t bg-white p-4 pb-[env(safe-area-inset-bottom)] sm:pb-4">
                                 <div className="flex items-start gap-3">
                                     <Avatar className="h-8 w-8 shrink-0">
                                         <AvatarImage src={currentProfile?.profilePicture} />
@@ -748,6 +748,12 @@ export default function NotesSection() {
                                                         e.target.style.height = 'auto';
                                                         e.target.style.height =
                                                             Math.min(e.target.scrollHeight, 120) + 'px';
+                                                    }}
+                                                    onFocus={() => {
+                                                        // Scroll to bottom when keyboard appears
+                                                        setTimeout(() => {
+                                                            window.scrollTo(0, document.body.scrollHeight);
+                                                        }, 300);
                                                     }}
                                                     onKeyDown={(e) => {
                                                         if (e.key === 'Enter' && !e.shiftKey) {
