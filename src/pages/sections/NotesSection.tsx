@@ -283,7 +283,10 @@ export default function NotesSection() {
 
     // Memoize filtered notes
     const filteredNotes = useMemo(() => {
-        return parsedNotes.filter((note) => note.isPublic || note.noteAuthor?.id === currentProfile?.id);
+        return parsedNotes.filter((note) => {
+            const author = Array.isArray(note.noteAuthor) ? note.noteAuthor[0] : note.noteAuthor;
+            return note.isPublic || author?.id === currentProfile?.id;
+        });
     }, [parsedNotes, currentProfile?.id]);
 
     // Memoize current user info
