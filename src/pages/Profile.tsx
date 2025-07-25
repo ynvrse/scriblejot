@@ -27,20 +27,6 @@ export default function Profile() {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Query $files to track uploaded files
-    const { data: filesData } = db.useQuery({
-        $files: {
-            $: {
-                where: {
-                    path: {
-                        $like: `profiles/${user?.id}/%`,
-                    },
-                },
-                order: { serverCreatedAt: 'desc' },
-            },
-        },
-    });
-
     // Initialize form when profile loads
     useEffect(() => {
         if (profile) {
@@ -51,28 +37,6 @@ export default function Profile() {
             });
         }
     }, [profile]);
-
-    // Auto-update profile picture URL when file appears in $files query
-    useEffect(() => {
-        if (profile?.profilePicture && user?.id && filesData?.$files) {
-            // Check if profilePicture is still a path (not a full S3 URL)
-            const isPath = !profile.profilePicture.startsWith('https://');
-
-            if (isPath) {
-                // Find the file with the matching path
-                const matchingFile = filesData.$files.find((f) => f.path === profile.profilePicture);
-
-                if (matchingFile?.url) {
-                    // Update profile with the actual S3 signed URL
-                    db.transact([
-                        db.tx.profiles[profile.id || user.id].update({
-                            profilePicture: matchingFile.url,
-                        }),
-                    ]).catch(console.error);
-                }
-            }
-        }
-    }, [filesData, profile?.profilePicture, user?.id, profile?.id]);
 
     if (isLoading) {
         return (
@@ -96,13 +60,14 @@ export default function Profile() {
     };
 
     const deleteOldProfilePicture = async () => {
+        if (!user?.id) return;
         try {
-            const userFiles = filesData?.$files || [];
+            const { files } = await (db.storage as any).list({ path: `profiles/${user.id}` });
             // Find and delete old profile pictures
-            const oldProfileFiles = userFiles.filter((file) => file.path.startsWith(`profiles/${user?.id}/avatar`));
+            const oldProfileFiles = files.filter((file: any) => file.path.startsWith(`profiles/${user?.id}/avatar`));
 
             for (const file of oldProfileFiles) {
-                await db.storage.delete(file.path);
+                await (db.storage as any).delete(file.path);
             }
         } catch (error) {
             console.warn('Failed to delete old profile pictures:', error);
@@ -124,18 +89,13 @@ export default function Profile() {
             const path = `profiles/${user.id}/avatar_${timestamp}.${fileExtension}`;
 
             // Upload file
-            const opts = {
-                contentType: file.type,
-                contentDisposition: 'inline',
-            };
-
-            await db.storage.uploadFile(path, file, opts);
+            const { url } = await (db.storage as any).upload({ path, file });
 
             // Store the path temporarily - useEffect will update with S3 URL automatically
             await db.transact([
                 db.tx.profiles[profile?.id || user.id].update({
-                    profilePicture: path,
-                    updatedAt: new Date(),
+                    profilePicture: url,
+                    updatedAt: new Date().toISOString(),
                 }),
             ]);
 
@@ -167,8 +127,8 @@ export default function Profile() {
             // Update profile to remove picture URL
             await db.transact([
                 db.tx.profiles[profile.id || user.id].update({
-                    profilePicture: null,
-                    updatedAt: new Date(),
+                    profilePicture: '',
+                    updatedAt: new Date().toISOString(),
                 }),
             ]);
 
@@ -235,7 +195,7 @@ export default function Profile() {
             }
 
             if (Object.keys(updates).length > 0) {
-                updates.updatedAt = new Date();
+                updates.updatedAt = new Date().toISOString();
                 await db.transact([db.tx.profiles[profile?.id || user.id].update(updates)]);
 
                 toast({
@@ -264,10 +224,6 @@ export default function Profile() {
         setIsEditing(false);
     };
 
-    // Get current user's files for debugging (optional)
-    const userFiles = filesData?.$files || [];
-    const currentProfileFiles = userFiles.filter((file) => file.path.startsWith(`profiles/${user?.id}/avatar`));
-
     return (
         <>
             <PageHeader>
@@ -281,7 +237,7 @@ export default function Profile() {
                         <div className="relative mx-auto">
                             <Avatar className="mx-auto h-24 w-24">
                                 <AvatarImage
-                                    src={profile?.profilePicture}
+                                    src={profile?.profilePicture || ''}
                                     alt={profile?.fullName || user?.email || 'User'}
                                 />
                                 <AvatarFallback className="text-lg">

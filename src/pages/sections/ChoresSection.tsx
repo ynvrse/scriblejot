@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import * as Icons from 'lucide-react';
-import { useState } from 'react';
+import { FC, useState } from 'react';
 
 type Chore = {
     id: number;
@@ -44,7 +44,7 @@ export default function ChoresSection() {
     const [editingChore, setEditingChore] = useState<Chore | null>(null);
     const [selectedChore, setSelectedChore] = useState<Chore | null>(null);
 
-    const [showActions, setShowActions] = useState(null);
+    const [showActions, setShowActions] = useState<number | null>(null);
     const [chores, setChores] = useState<Chore[]>(initialChores);
     const [newChore, setNewChore] = useState<Omit<Chore, 'id' | 'completed'>>({
         title: '',
@@ -99,7 +99,7 @@ export default function ChoresSection() {
         }
     };
 
-    const toggleChoreCompletion = (id) => {
+    const toggleChoreCompletion = (id: number) => {
         setChores((prev) => prev.map((c) => (c.id === id ? { ...c, completed: !c.completed } : c)));
         setShowActions(null);
     };
@@ -110,8 +110,12 @@ export default function ChoresSection() {
         setSelectedChore(null);
     };
 
-    const IconComponent = ({ name, size = 32, className = '' }) => {
-        const Icon = Icons[name] || Icons.Home;
+    const IconComponent: FC<{ name: string; size?: number; className?: string }> = ({
+        name,
+        size = 32,
+        className = '',
+    }) => {
+        const Icon = (Icons as any)[name] || Icons.Home;
         return <Icon size={size} className={className} />;
     };
 
@@ -145,7 +149,7 @@ export default function ChoresSection() {
 
                     <DateChoiceButtons
                         isToday={(editingChore ?? newChore).isToday}
-                        setIsToday={(val) => {
+                        setIsToday={(val: boolean) => {
                             editingChore
                                 ? setEditingChore({ ...editingChore, isToday: val })
                                 : setNewChore({ ...newChore, isToday: val });
@@ -167,7 +171,7 @@ export default function ChoresSection() {
 
                     <TimeInput
                         value={(editingChore ?? newChore).dueTime}
-                        onChange={(t) =>
+                        onChange={(t: string) =>
                             editingChore
                                 ? setEditingChore({ ...editingChore, dueTime: t })
                                 : setNewChore({ ...newChore, dueTime: t })
@@ -176,7 +180,7 @@ export default function ChoresSection() {
 
                     <IconSelector
                         selected={(editingChore ?? newChore).icon}
-                        onSelect={(icon) =>
+                        onSelect={(icon: string) =>
                             editingChore
                                 ? setEditingChore({ ...editingChore, icon })
                                 : setNewChore({ ...newChore, icon })
@@ -298,11 +302,11 @@ export default function ChoresSection() {
 
 // ===== Helper Components =====
 
-const TimeInput = ({ value, onChange }) => {
+const TimeInput: FC<{ value: string; onChange: (value: string) => void }> = ({ value, onChange }) => {
     const [hours, setHours] = useState(value?.split(':')[0] || '12');
     const [minutes, setMinutes] = useState(value?.split(':')[1] || '00');
 
-    const update = (h, m) => onChange(`${h.padStart(2, '0')}:${m.padStart(2, '0')}`);
+    const update = (h: string, m: string) => onChange(`${h.padStart(2, '0')}:${m.padStart(2, '0')}`);
 
     return (
         <div className="flex items-center gap-2 rounded-lg border bg-blue-50 p-3">
@@ -336,7 +340,7 @@ const TimeInput = ({ value, onChange }) => {
     );
 };
 
-const DateChoiceButtons = ({ isToday, setIsToday }) => (
+const DateChoiceButtons: FC<{ isToday: boolean; setIsToday: (value: boolean) => void }> = ({ isToday, setIsToday }) => (
     <div className="flex gap-4">
         {[
             { label: 'Hari Ini', icon: Icons.Clock, value: true },
@@ -356,10 +360,10 @@ const DateChoiceButtons = ({ isToday, setIsToday }) => (
     </div>
 );
 
-const IconSelector = ({ selected, onSelect }) => (
+const IconSelector: FC<{ selected: string; onSelect: (value: string) => void }> = ({ selected, onSelect }) => (
     <div className="grid grid-cols-4 gap-2">
         {availableIcons.map((icon) => {
-            const Icon = Icons[icon.name];
+            const Icon = (Icons as any)[icon.name];
             return (
                 <button
                     key={icon.name}
@@ -378,11 +382,11 @@ const IconSelector = ({ selected, onSelect }) => (
     </div>
 );
 
-const EmptyState = ({ onAdd }) => (
+const EmptyState: FC<{ onAdd: () => void }> = ({ onAdd }) => (
     <div className="flex flex-col items-center justify-center px-8 py-16">
         <div className="mb-6 flex space-x-2">
             <div className="animate-bounce">
-                <Icons.Utensils className="text-blue-600" si ze={24} />
+                <Icons.Utensils className="text-blue-600" size={24} />
             </div>
             <div className="animate-bounce delay-75">
                 <Icons.Shirt className="text-purple-600" size={24} />
