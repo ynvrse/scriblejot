@@ -285,6 +285,7 @@ export default function NotesSection() {
     const filteredNotes = useMemo(() => {
         return parsedNotes.filter((note) => {
             const author = Array.isArray(note.noteAuthor) ? note.noteAuthor[0] : note.noteAuthor;
+            console.log(author?.id);
             return note.isPublic || author?.id === currentProfile?.id;
         });
     }, [parsedNotes, currentProfile?.id]);
@@ -728,12 +729,6 @@ export default function NotesSection() {
                         {user && (
                             <div className="shrink-0 border-t bg-white p-4 pb-[env(safe-area-inset-bottom)] sm:pb-4">
                                 <div className="flex items-start gap-3">
-                                    <Avatar className="h-8 w-8 shrink-0">
-                                        <AvatarImage src={currentProfile?.profilePicture} />
-                                        <AvatarFallback>
-                                            {currentProfile?.fullName?.[0] || currentProfile?.firstName?.[0] || 'U'}
-                                        </AvatarFallback>
-                                    </Avatar>
                                     <div className="min-w-0 flex-1">
                                         <form onSubmit={addComment}>
                                             <div className="flex items-end gap-2">
@@ -776,9 +771,7 @@ export default function NotesSection() {
                                                     <Icons.Send size={16} />
                                                 </Button>
                                             </div>
-                                            <p className="mt-1 text-xs text-gray-400">
-                                                Tekan Enter untuk kirim, Shift+Enter untuk baris baru
-                                            </p>
+                                            <p className="mt-1 text-xs text-gray-400"></p>
                                         </form>
                                     </div>
                                 </div>
