@@ -10,12 +10,8 @@ import { Camera, Edit2, LogOut, Save, Trash2, User, X } from 'lucide-react';
 import { ModeToggle } from '@/components/mode-toggle';
 import db from '@/hooks/useIDB';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { InstaQLEntity } from '@instantdb/react';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AppSchema } from '../../instant.schema';
-
-type InstantFile = InstaQLEntity<AppSchema, '$files'>;
 
 export default function Profile() {
     const { user, profile, isLoading } = useUserProfile();
