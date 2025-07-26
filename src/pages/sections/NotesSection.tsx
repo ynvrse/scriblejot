@@ -123,7 +123,7 @@ const NoteCard = memo(({ note, onSelect }: { note: Note; onSelect: (note: Note) 
 
     return (
         <Card
-            className="relative flex max-w-[300px] min-w-[280px] flex-shrink-0 cursor-pointer items-start gap-3 p-4 transition-shadow duration-200 hover:shadow-md"
+            className="relative flex max-w-[250px] min-w-[250px] flex-shrink-0 cursor-pointer items-start gap-3 p-4 transition-shadow duration-200 hover:shadow-md"
             onClick={handleClick}
         >
             {/* Privacy indicator */}
@@ -169,7 +169,7 @@ const CommentItem = memo(({ comment, currentProfileId }: { comment: Comment; cur
         <div className={`flex items-start gap-3 ${!isOwnComment ? '' : 'justify-end'}`}>
             {!isOwnComment && (
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={comment.commentAuthor?.[0]?.profilePicture || 'https://github.com/shadcn.png'} />
+                    <AvatarImage src={comment.commentAuthor?.[0]?.profilePicture} />
                     <AvatarFallback>
                         {comment.commentAuthor?.[0]?.fullName || comment.commentAuthor?.[0]?.firstName?.[0] || 'U'}
                     </AvatarFallback>
@@ -178,14 +178,20 @@ const CommentItem = memo(({ comment, currentProfileId }: { comment: Comment; cur
 
             <div
                 className={`max-w-[75%] min-w-[150px] rounded-lg p-2 text-sm break-words ${
-                    isOwnComment ? 'self-end bg-blue-100 text-right' : 'self-start bg-gray-100'
-                }`}
+                    isOwnComment ? 'self-end bg-blue-100 text-right' : 'self-start bg-gray-200'
+                } `}
             >
                 <p className="font-medium">
-                    {comment.commentAuthor?.[0]?.fullName || comment.commentAuthor?.[0]?.firstName || 'Anonymous'}
+                    {isOwnComment
+                        ? 'Anda'
+                        : comment.commentAuthor?.[0]?.fullName || comment.commentAuthor?.[0]?.firstName || 'Anonymous'}
                 </p>
+
                 <p className="text-xs text-gray-500">{formatDate(comment.createdAt)}</p>
-                <p className="mt-1">{comment.content}</p>
+
+                <p className="mt-2 text-left leading-relaxed break-words whitespace-pre-wrap text-gray-800">
+                    {comment.content}
+                </p>
             </div>
 
             {isOwnComment && (
@@ -212,24 +218,13 @@ export default function NotesSection() {
     const lastCommentRef = useRef<HTMLDivElement | null>(null);
     const modalRef = useRef<HTMLDivElement | null>(null);
 
-    useEffect(() => {
-        if (lastCommentRef.current) {
-            lastCommentRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [selectedNote?.noteComments?.length]);
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-                handleCloseModal();
-            }
+        if (showAddNote) {
+            setTimeout(() => textareaRef.current?.focus(), 100);
         }
-
-        document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, []);
+    }, [showAddNote]);
 
     // Main query for notes - automatically updates in realtime
     const query = db.useQuery({
@@ -403,6 +398,21 @@ export default function NotesSection() {
         },
         [selectedNote, newComment, user, currentProfile],
     );
+    useEffect(() => {
+        if (lastCommentRef.current) {
+            lastCommentRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [selectedNote?.noteComments?.length]);
+
+    useEffect(() => {
+        if (lastCommentRef.current) {
+            // Delay 50ms untuk memastikan rendering selesai
+            const timeout = setTimeout(() => {
+                lastCommentRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, 50);
+            return () => clearTimeout(timeout);
+        }
+    }, [commentsQuery.data?.comments]);
 
     // Memoized callbacks for event handlers
     const handleNoteSelect = useCallback((note: Note) => {
@@ -457,50 +467,76 @@ export default function NotesSection() {
             </div>
 
             {showAddNote && (
-                <Card className="mb-4 p-4">
-                    <div className="space-y-4">
-                        <div>
-                            <label className="mb-2 block font-medium">Catatan</label>
-                            <textarea
-                                placeholder="Tulis catatan Anda di sini..."
-                                value={newNote.content}
-                                onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
-                                className="min-h-[100px] w-full resize-none rounded-lg border p-3 focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                rows={4}
-                            />
+                <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 px-4 sm:items-center">
+                    <div className="w-full max-w-md rounded-t-2xl bg-white p-4 shadow-lg sm:rounded-2xl sm:pt-6 sm:pb-6">
+                        <div className="mb-4 text-center">
+                            <div className="mx-auto mb-2 h-1.5 w-12 rounded-full bg-gray-300 sm:hidden" />
+                            <h2 className="text-lg font-semibold">Buat Catatan</h2>
+                            <p className="text-sm text-gray-500">Tulis catatan pribadi atau publik.</p>
                         </div>
 
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
+                        <div className="space-y-4">
+                            <div>
+                                <label className="mb-2 block text-sm font-medium">Catatan</label>
+                                <textarea
+                                    ref={textareaRef}
+                                    autoFocus
+                                    placeholder="Tulis catatan Anda di sini..."
+                                    value={newNote.content}
+                                    onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
+                                    className="min-h-[100px] w-full resize-none rounded-lg border p-3 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                    rows={4}
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between">
                                 <button
                                     type="button"
-                                    onClick={() => setNewNote({ ...newNote, isPublic: !newNote.isPublic })}
-                                    className={`flex items-center gap-2 rounded-lg border-2 px-4 py-2 transition-colors ${
+                                    onClick={() => {
+                                        setNewNote({ ...newNote, isPublic: !newNote.isPublic });
+                                        // jangan blur agar keyboard tidak turun
+                                        textareaRef.current?.focus();
+                                    }}
+                                    className={`flex items-center gap-2 rounded-lg border-2 px-4 py-2 text-sm font-medium transition-colors ${
                                         newNote.isPublic
                                             ? 'border-green-500 bg-green-50 text-green-700'
                                             : 'border-gray-200 hover:border-gray-300'
                                     }`}
                                 >
                                     {newNote.isPublic ? <Icons.Globe size={16} /> : <Icons.Lock size={16} />}
-                                    <span className="font-medium">{newNote.isPublic ? 'Publik' : 'Privat'}</span>
+                                    {newNote.isPublic ? 'Publik' : 'Privat'}
                                 </button>
                                 <span className="text-xs text-gray-500">
                                     {newNote.isPublic ? 'Semua orang bisa melihat' : 'Hanya Anda yang bisa melihat'}
                                 </span>
                             </div>
-                        </div>
 
-                        <div className="flex gap-2">
-                            <Button onClick={addNote} size="sm" disabled={!(newNote.content ?? '').trim()}>
-                                <Icons.Check size={16} className="mr-1" />
-                                Simpan
-                            </Button>
-                            <Button onClick={() => setShowAddNote(false)} variant="outline" size="sm">
-                                Batal
-                            </Button>
+                            <div className="flex justify-end gap-2 pt-2">
+                                <Button
+                                    onClick={() => {
+                                        addNote();
+                                        textareaRef.current?.blur(); // bisa tetap aktif jika kamu mau keyboard tetap terbuka
+                                    }}
+                                    size="sm"
+                                    disabled={!(newNote.content ?? '').trim()}
+                                >
+                                    <Icons.Check size={16} className="mr-1" />
+                                    Simpan
+                                </Button>
+                                <Button
+                                    onClick={() => {
+                                        textareaRef.current?.blur(); // supaya keyboard turun
+                                        setShowAddNote(false);
+                                    }}
+                                    variant="outline"
+                                    size="sm"
+                                >
+                                    Batal
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                </Card>
+                </div>
             )}
 
             {/* Show empty state when no notes */}
@@ -529,175 +565,164 @@ export default function NotesSection() {
                                 <Icons.X size={18} />
                             </Button>
                         </div>
+                        <div className="p-4 sm:p-6">
+                            {editingNote ? (
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="mb-2 block text-sm font-medium">Catatan</label>
+                                        <textarea
+                                            value={editingNote.content}
+                                            onChange={(e) =>
+                                                setEditingNote({ ...editingNote, content: e.target.value })
+                                            }
+                                            className="min-h-[120px] w-full resize-none rounded-lg border p-3 text-base focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                            rows={5}
+                                        />
+                                    </div>
+
+                                    {/* Mobile-optimized toggle */}
+                                    <div className="space-y-2">
+                                        <button
+                                            type="button"
+                                            onClick={() =>
+                                                setEditingNote({
+                                                    ...editingNote,
+                                                    isPublic: !editingNote.isPublic,
+                                                })
+                                            }
+                                            className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-3 transition-colors ${
+                                                editingNote.isPublic
+                                                    ? 'border-green-500 bg-green-50 text-green-700'
+                                                    : 'border-gray-200 hover:border-gray-300'
+                                            }`}
+                                        >
+                                            {editingNote.isPublic ? (
+                                                <Icons.Globe size={18} />
+                                            ) : (
+                                                <Icons.Lock size={18} />
+                                            )}
+                                            <span className="font-medium">
+                                                {editingNote.isPublic ? 'Publik' : 'Privat'}
+                                            </span>
+                                        </button>
+                                        <p className="text-center text-xs text-gray-500">
+                                            {editingNote.isPublic
+                                                ? 'Semua orang bisa melihat'
+                                                : 'Hanya Anda yang bisa melihat'}
+                                        </p>
+                                    </div>
+
+                                    {/* Mobile-optimized buttons */}
+                                    <div className="flex gap-2">
+                                        <Button onClick={updateNote} className="flex-1 py-3">
+                                            <Icons.Check size={16} className="mr-2" />
+                                            Update
+                                        </Button>
+                                        <Button
+                                            onClick={() => setEditingNote(null)}
+                                            variant="outline"
+                                            className="flex-1 py-3"
+                                        >
+                                            Batal
+                                        </Button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="space-y-2">
+                                    {/* Author info - mobile optimized */}
+                                    <div className="flex items-start gap-3">
+                                        <Avatar className="h-12 w-12 shrink-0">
+                                            <AvatarImage src={selectedNote.noteAuthor?.[0]?.profilePicture} />
+                                            <AvatarFallback>
+                                                {selectedNote.noteAuthor?.[0]?.fullName?.[0] ||
+                                                    selectedNote.noteAuthor?.[0]?.firstName?.[0] ||
+                                                    'U'}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                        <div className="min-w-0 flex-1">
+                                            <h4 className="truncate font-medium">
+                                                {selectedNote.noteAuthor?.[0]?.fullName ||
+                                                    selectedNote.noteAuthor?.[0]?.firstName ||
+                                                    'Anonymous'}
+                                            </h4>
+                                            <p className="text-sm text-gray-500">
+                                                {formatDate(selectedNote.createdAt)}
+                                            </p>
+                                        </div>
+                                        {/* Privacy badge - moved below on mobile */}
+                                        <div className="mt-1">
+                                            {selectedNote.isPublic ? (
+                                                <div className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-xs text-green-600">
+                                                    <Icons.Globe size={12} />
+                                                    <span>Publik</span>
+                                                </div>
+                                            ) : (
+                                                <div className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-1 text-xs text-gray-500">
+                                                    <Icons.Lock size={12} />
+                                                    <span>Privat</span>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        {/* Menu button */}
+                                        {selectedNote.noteAuthor?.[0]?.id === currentProfile?.id && (
+                                            <Button
+                                                variant={'ghost'}
+                                                size={'icon'}
+                                                onClick={() => setEditingMode(!editingMode)}
+                                                className="h-8 w-8 shrink-0 items-center"
+                                            >
+                                                <Icons.Ellipsis size={16} />
+                                            </Button>
+                                        )}
+                                    </div>
+
+                                    {/* Note content */}
+                                    <div className="rounded-lg bg-green-50 p-4">
+                                        <p className="leading-relaxed whitespace-pre-wrap text-gray-700">
+                                            {selectedNote.content}
+                                        </p>
+                                    </div>
+
+                                    {/* Action buttons - mobile optimized */}
+                                    {editingMode && selectedNote.noteAuthor?.[0]?.id === currentProfile?.id && (
+                                        <div className="flex gap-2">
+                                            <Button
+                                                onClick={() => setEditingNote({ ...selectedNote })}
+                                                variant="outline"
+                                                className="flex-1 py-3"
+                                            >
+                                                <Icons.Edit3 size={16} className="mr-2" />
+                                                Edit
+                                            </Button>
+                                            <Button
+                                                onClick={() => deleteNote(selectedNote.id)}
+                                                variant="outline"
+                                                className="flex-1 py-3 text-red-600 hover:text-red-700"
+                                            >
+                                                <Icons.Trash2 size={16} className="mr-2" />
+                                                Hapus
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                            <h4 className="mt-4 flex items-center gap-2 text-base font-semibold text-gray-800">
+                                <Icons.MessageSquare size={16} />
+                                Komentar
+                                {selectedNote.noteComments && selectedNote.noteComments.length > 0 && (
+                                    <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">
+                                        {selectedNote.noteComments.length}
+                                    </span>
+                                )}
+                            </h4>
+                        </div>
 
                         {/* Scrollable Content */}
                         <div className="flex-1 overflow-y-auto">
                             <div className="p-4 sm:p-6">
-                                {editingNote ? (
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="mb-2 block text-sm font-medium">Catatan</label>
-                                            <textarea
-                                                value={editingNote.content}
-                                                onChange={(e) =>
-                                                    setEditingNote({ ...editingNote, content: e.target.value })
-                                                }
-                                                className="min-h-[120px] w-full resize-none rounded-lg border p-3 text-base focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                                rows={5}
-                                            />
-                                        </div>
-
-                                        {/* Mobile-optimized toggle */}
-                                        <div className="space-y-2">
-                                            <button
-                                                type="button"
-                                                onClick={() =>
-                                                    setEditingNote({
-                                                        ...editingNote,
-                                                        isPublic: !editingNote.isPublic,
-                                                    })
-                                                }
-                                                className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-3 transition-colors ${
-                                                    editingNote.isPublic
-                                                        ? 'border-green-500 bg-green-50 text-green-700'
-                                                        : 'border-gray-200 hover:border-gray-300'
-                                                }`}
-                                            >
-                                                {editingNote.isPublic ? (
-                                                    <Icons.Globe size={18} />
-                                                ) : (
-                                                    <Icons.Lock size={18} />
-                                                )}
-                                                <span className="font-medium">
-                                                    {editingNote.isPublic ? 'Publik' : 'Privat'}
-                                                </span>
-                                            </button>
-                                            <p className="text-center text-xs text-gray-500">
-                                                {editingNote.isPublic
-                                                    ? 'Semua orang bisa melihat'
-                                                    : 'Hanya Anda yang bisa melihat'}
-                                            </p>
-                                        </div>
-
-                                        {/* Mobile-optimized buttons */}
-                                        <div className="flex gap-2">
-                                            <Button onClick={updateNote} className="flex-1 py-3">
-                                                <Icons.Check size={16} className="mr-2" />
-                                                Update
-                                            </Button>
-                                            <Button
-                                                onClick={() => setEditingNote(null)}
-                                                variant="outline"
-                                                className="flex-1 py-3"
-                                            >
-                                                Batal
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {/* Author info - mobile optimized */}
-                                        <div className="flex items-start gap-3">
-                                            <Avatar className="h-12 w-12 shrink-0">
-                                                <AvatarImage
-                                                    src={
-                                                        selectedNote.noteAuthor?.[0]?.profilePicture ||
-                                                        'https://github.com/shadcn.png'
-                                                    }
-                                                />
-                                                <AvatarFallback>
-                                                    {selectedNote.noteAuthor?.[0]?.fullName?.[0] ||
-                                                        selectedNote.noteAuthor?.[0]?.firstName?.[0] ||
-                                                        'U'}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="min-w-0 flex-1">
-                                                <h4 className="truncate font-medium">
-                                                    {selectedNote.noteAuthor?.[0]?.fullName ||
-                                                        selectedNote.noteAuthor?.[0]?.firstName ||
-                                                        'Anonymous'}
-                                                </h4>
-                                                <p className="text-sm text-gray-500">
-                                                    {formatDate(selectedNote.createdAt)}
-                                                </p>
-
-                                                {/* Privacy badge - moved below on mobile */}
-                                                <div className="mt-2">
-                                                    {selectedNote.isPublic ? (
-                                                        <div className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-1 text-xs text-green-600">
-                                                            <Icons.Globe size={12} />
-                                                            <span>Publik</span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="inline-flex items-center gap-1 rounded-full bg-gray-50 px-2 py-1 text-xs text-gray-500">
-                                                            <Icons.Lock size={12} />
-                                                            <span>Privat</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-
-                                            {/* Menu button */}
-                                            {selectedNote.noteAuthor?.[0]?.id === currentProfile?.id && (
-                                                <Button
-                                                    variant={'ghost'}
-                                                    size={'icon'}
-                                                    onClick={() => setEditingMode(!editingMode)}
-                                                    className="h-8 w-8 shrink-0"
-                                                >
-                                                    <Icons.Ellipsis size={16} />
-                                                </Button>
-                                            )}
-                                        </div>
-
-                                        {/* Note content */}
-                                        <div className="rounded-lg bg-gray-50 p-4">
-                                            {selectedNote.title && (
-                                                <h4 className="mb-2 font-semibold text-gray-800">
-                                                    {selectedNote.title}
-                                                </h4>
-                                            )}
-                                            <p className="text-base leading-relaxed whitespace-pre-wrap text-gray-700">
-                                                {selectedNote.content}
-                                            </p>
-                                        </div>
-
-                                        {/* Action buttons - mobile optimized */}
-                                        {editingMode && selectedNote.noteAuthor?.[0]?.id === currentProfile?.id && (
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    onClick={() => setEditingNote({ ...selectedNote })}
-                                                    variant="outline"
-                                                    className="flex-1 py-3"
-                                                >
-                                                    <Icons.Edit3 size={16} className="mr-2" />
-                                                    Edit
-                                                </Button>
-                                                <Button
-                                                    onClick={() => deleteNote(selectedNote.id)}
-                                                    variant="outline"
-                                                    className="flex-1 py-3 text-red-600 hover:text-red-700"
-                                                >
-                                                    <Icons.Trash2 size={16} className="mr-2" />
-                                                    Hapus
-                                                </Button>
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-
                                 {/* Comments Section */}
                                 <div className="mt-6 flex flex-col gap-3">
-                                    <h4 className="flex items-center gap-2 text-base font-semibold text-gray-800">
-                                        <Icons.MessageSquare size={16} />
-                                        Komentar
-                                        {selectedNote.noteComments && selectedNote.noteComments.length > 0 && (
-                                            <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">
-                                                {selectedNote.noteComments.length}
-                                            </span>
-                                        )}
-                                    </h4>
-
                                     {/* Comments list - mobile optimized */}
                                     <div className="space-y-3">
                                         {selectedNote.noteComments?.map((comment: Comment, index: number) => {
@@ -727,48 +752,41 @@ export default function NotesSection() {
 
                         {/* Fixed Comment Form - positioned above keyboard on mobile */}
                         {user && (
-                            <div className="shrink-0 border-t bg-white p-4 pb-[env(safe-area-inset-bottom)] sm:pb-4">
+                            <div className="shrink-0 border-t p-4 pb-2 sm:pb-4">
                                 <div className="flex items-start gap-3">
                                     <div className="min-w-0 flex-1">
-                                        <form onSubmit={addComment}>
-                                            <div className="flex items-end gap-2">
+                                        <form onSubmit={addComment} autoComplete="off">
+                                            <div className="flex items-center gap-2">
                                                 <textarea
+                                                    name="comment_xyz123"
+                                                    autoComplete="new-password"
+                                                    autoCapitalize="off"
+                                                    autoCorrect="off"
+                                                    spellCheck={false}
                                                     value={newComment}
-                                                    onChange={(e) => setNewComment(e.target.value)}
+                                                    onChange={(e) => {
+                                                        setNewComment(e.target.value);
+
+                                                        // Auto-grow tinggi textarea
+                                                        e.target.style.height = 'auto'; // reset dulu
+                                                        e.target.style.height = `${e.target.scrollHeight}px`; // lalu atur tinggi sesuai isi
+                                                    }}
                                                     placeholder="Tulis komentar..."
-                                                    className="flex-1 resize-none rounded-lg border p-3 text-base focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                                                    rows={1}
+                                                    className="flex-1 resize-none overflow-hidden rounded-lg border p-3 text-base focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                                     style={{
-                                                        minHeight: '44px',
-                                                        maxHeight: '120px',
+                                                        minHeight: '44px', // tinggi awal minimum
+                                                        maxHeight: '120px', // batasi maksimum jika perlu
                                                     }}
-                                                    onInput={(e) => {
-                                                        const target = e.target as HTMLTextAreaElement;
-                                                        target.style.height = 'auto';
-                                                        target.style.height = Math.min(target.scrollHeight, 120) + 'px';
-                                                    }}
-                                                    onFocus={() => {
-                                                        // Scroll to bottom when keyboard appears
-                                                        setTimeout(() => {
-                                                            window.scrollTo(0, document.body.scrollHeight);
-                                                        }, 300);
-                                                    }}
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter' && !e.shiftKey) {
-                                                            e.preventDefault();
-                                                            if (newComment?.trim()) {
-                                                                addComment(e);
-                                                            }
-                                                        }
-                                                    }}
+                                                    rows={1}
                                                 />
+
                                                 <Button
                                                     size="sm"
                                                     type="submit"
                                                     disabled={!newComment?.trim()}
-                                                    className="h-11 shrink-0 px-3"
+                                                    className="h-11 w-11 rounded-full"
                                                 >
-                                                    <Icons.Send size={16} />
+                                                    <Icons.Send size={24} className="h-25" />
                                                 </Button>
                                             </div>
                                             <p className="mt-1 text-xs text-gray-400"></p>

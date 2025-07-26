@@ -1,9 +1,9 @@
 // ChoresSection.tsx
+import StylishDatePicker from '@/components/StylishDatePicker';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import * as Icons from 'lucide-react';
-import { FC, useState } from 'react';
+import { FC, useEffect, useRef, useState } from 'react';
 
 type Chore = {
     id: number;
@@ -33,6 +33,7 @@ export default function ChoresSection() {
     const [showAddChore, setShowAddChore] = useState(false);
     const [editingChore, setEditingChore] = useState<Chore | null>(null);
     const [selectedChore, setSelectedChore] = useState<Chore | null>(null);
+    const dateInputRef = useRef<HTMLInputElement>(null);
 
     const [showActions, setShowActions] = useState<number | null>(null);
     const [chores, setChores] = useState<Chore[]>(initialChores);
@@ -43,6 +44,14 @@ export default function ChoresSection() {
         icon: 'Home',
         isToday: true,
     });
+
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        if (showAddChore) {
+            setTimeout(() => inputRef.current?.focus(), 100);
+        }
+    }, [showAddChore]);
 
     const formatDate = (d: string) =>
         new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -125,74 +134,112 @@ export default function ChoresSection() {
             </div>
 
             {showAddChore && (
-                <Card className="mb-4 space-y-4 p-4">
-                    <Input
-                        placeholder="Nama tugas"
-                        value={(editingChore ?? newChore).title}
-                        onChange={(e) => {
-                            const title = e.target.value;
-                            editingChore
-                                ? setEditingChore({ ...editingChore, title })
-                                : setNewChore({ ...newChore, title });
-                        }}
-                    />
-
-                    <DateChoiceButtons
-                        isToday={(editingChore ?? newChore).isToday}
-                        setIsToday={(val: boolean) => {
-                            editingChore
-                                ? setEditingChore({ ...editingChore, isToday: val })
-                                : setNewChore({ ...newChore, isToday: val });
-                        }}
-                    />
-
-                    {!(editingChore ?? newChore).isToday && (
-                        <Input
-                            type="date"
-                            value={(editingChore ?? newChore).dueDate}
+                <div className="fixed inset-0 z-50 flex w-full items-start justify-center bg-black/30">
+                    <Card className="w-full max-w-md space-y-4 p-4 sm:rounded-2xl sm:p-6">
+                        <textarea
+                            name="chore_q98y08as"
+                            autoComplete="off"
+                            autoFocus
+                            placeholder="Nama tugas"
+                            value={(editingChore ?? newChore).title}
                             onChange={(e) => {
-                                const dueDate = e.target.value;
+                                const title = e.target.value;
                                 editingChore
-                                    ? setEditingChore({ ...editingChore, dueDate })
-                                    : setNewChore({ ...newChore, dueDate });
+                                    ? setEditingChore({ ...editingChore, title })
+                                    : setNewChore({ ...newChore, title });
+                            }}
+                            className="w-full flex-1 resize-none overflow-hidden rounded-lg border p-3 text-base focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            style={{
+                                minHeight: '44px', // tinggi awal minimum
+                                maxHeight: '120px', // batasi maksimum jika perlu
+                            }}
+                            rows={1}
+                        />
+
+                        <DateChoiceButtons
+                            isToday={(editingChore ?? newChore).isToday}
+                            setIsToday={(val) => {
+                                editingChore
+                                    ? setEditingChore({ ...editingChore, isToday: val })
+                                    : setNewChore({ ...newChore, isToday: val });
+
+                                // trigger klik date picker hanya jika tombol "Pilih Tanggal" dipilih
+                                if (!val) {
+                                    setTimeout(() => {
+                                        dateInputRef.current?.showPicker?.(); // modern browser
+                                        dateInputRef.current?.click(); // fallback
+                                    }, 10);
+                                }
                             }}
                         />
-                    )}
 
-                    <TimeInput
-                        value={(editingChore ?? newChore).dueTime}
-                        onChange={(t: string) =>
-                            editingChore
-                                ? setEditingChore({ ...editingChore, dueTime: t })
-                                : setNewChore({ ...newChore, dueTime: t })
-                        }
-                    />
+                        {/* hidden input date */}
 
-                    <IconSelector
-                        selected={(editingChore ?? newChore).icon}
-                        onSelect={(icon: string) =>
-                            editingChore
-                                ? setEditingChore({ ...editingChore, icon })
-                                : setNewChore({ ...newChore, icon })
-                        }
-                    />
+                        {!(editingChore ?? newChore).isToday && (
+                            <>
+                                <input
+                                    ref={dateInputRef}
+                                    type="date"
+                                    hidden
+                                    value={(editingChore ?? newChore).dueDate}
+                                    onChange={(e) => {
+                                        const dueDate = e.target.value;
+                                        editingChore
+                                            ? setEditingChore({ ...editingChore, dueDate })
+                                            : setNewChore({ ...newChore, dueDate });
+                                    }}
+                                />
 
-                    <div className="flex gap-2">
-                        <Button onClick={saveChore} size="sm">
-                            <Icons.Check size={16} className="mr-1" /> Save
-                        </Button>
-                        <Button
-                            onClick={() => {
-                                setShowAddChore(false);
-                                setEditingChore(null);
+                                <StylishDatePicker
+                                    date={(editingChore ?? newChore).dueDate}
+                                    inputRef={dateInputRef}
+                                    onChange={(val) =>
+                                        editingChore
+                                            ? setEditingChore({ ...editingChore, dueDate: val })
+                                            : setNewChore({ ...newChore, dueDate: val })
+                                    }
+                                />
+                            </>
+                        )}
+
+                        <TimeInput
+                            value={(editingChore ?? newChore).dueTime}
+                            onChange={(t: string) => {
+                                editingChore
+                                    ? setEditingChore({ ...editingChore, dueTime: t })
+                                    : setNewChore({ ...newChore, dueTime: t });
+                                inputRef.current?.focus();
                             }}
-                            variant="outline"
-                            size="sm"
-                        >
-                            Cancel
-                        </Button>
-                    </div>
-                </Card>
+                        />
+
+                        <IconSelector
+                            selected={(editingChore ?? newChore).icon}
+                            onSelect={(icon: string) => {
+                                editingChore
+                                    ? setEditingChore({ ...editingChore, icon })
+                                    : setNewChore({ ...newChore, icon });
+                                inputRef.current?.focus();
+                            }}
+                        />
+
+                        <div className="flex gap-2">
+                            <Button onClick={saveChore} size="sm">
+                                <Icons.Check size={16} className="mr-1" /> Save
+                            </Button>
+                            <Button
+                                onClick={() => {
+                                    inputRef.current?.blur();
+                                    setShowAddChore(false);
+                                    setEditingChore(null);
+                                }}
+                                variant="outline"
+                                size="sm"
+                            >
+                                Cancel
+                            </Button>
+                        </div>
+                    </Card>
+                </div>
             )}
 
             {chores.length === 0 ? (
@@ -208,7 +255,7 @@ export default function ChoresSection() {
                                     chore.completed
                                         ? 'bg-primary text-primary-foreground'
                                         : overdue
-                                          ? 'bg-gradient-to-br from-rose-500 to-pink-600 text-white'
+                                          ? 'bg-rose-500 text-white'
                                           : ''
                                 }`}
                             >
@@ -225,10 +272,9 @@ export default function ChoresSection() {
                                 >
                                     {chore.completed && <Icons.Check size={14} />}
                                 </button>
-
                                 {/* Detail Button */}
                                 <Button
-                                    onClick={() => setSelectedChore(chore)}
+                                    onClick={() => setShowActions(showActions === chore.id ? null : chore.id)}
                                     size="sm"
                                     variant="ghost"
                                     className="absolute top-2 right-2 h-6 w-6 p-0"
@@ -260,7 +306,6 @@ export default function ChoresSection() {
                                         )}
                                     </div>
                                 </div>
-
                                 {/* Action Buttons */}
                                 {showActions === chore.id && (
                                     <div className="mt-4 flex justify-center gap-2 border-t pt-4">
@@ -299,8 +344,8 @@ const TimeInput: FC<{ value: string; onChange: (value: string) => void }> = ({ v
     const update = (h: string, m: string) => onChange(`${h.padStart(2, '0')}:${m.padStart(2, '0')}`);
 
     return (
-        <div className="flex items-center gap-2 rounded-lg border bg-blue-50 p-3">
-            <Icons.Clock size={20} className="text-blue-500" />
+        <div className="border-primary bg-primary/10 flex items-center gap-2 rounded-lg border-2 p-3">
+            <Icons.Clock size={20} className="text-primary" />
             <input
                 type="number"
                 value={hours}
@@ -311,7 +356,7 @@ const TimeInput: FC<{ value: string; onChange: (value: string) => void }> = ({ v
                     setHours(h);
                     update(h, minutes);
                 }}
-                className="w-12 bg-transparent text-center font-bold text-blue-600 outline-none"
+                className="border-primary text-primary w-12 text-center font-bold outline-none"
             />
             <span>:</span>
             <input
@@ -324,13 +369,17 @@ const TimeInput: FC<{ value: string; onChange: (value: string) => void }> = ({ v
                     setMinutes(m);
                     update(hours, m);
                 }}
-                className="w-12 bg-transparent text-center font-bold text-blue-600 outline-none"
+                className="border-primary text-primary w-12 text-center font-bold outline-none"
             />
         </div>
     );
 };
 
-const DateChoiceButtons: FC<{ isToday: boolean; setIsToday: (value: boolean) => void }> = ({ isToday, setIsToday }) => (
+const DateChoiceButtons: FC<{
+    isToday: boolean;
+    setIsToday: (value: boolean) => void;
+    onPickDate?: () => void;
+}> = ({ isToday, setIsToday, onPickDate }) => (
     <div className="flex gap-4">
         {[
             { label: 'Hari Ini', icon: Icons.Clock, value: true },
@@ -338,9 +387,14 @@ const DateChoiceButtons: FC<{ isToday: boolean; setIsToday: (value: boolean) => 
         ].map(({ label, icon: Icon, value }) => (
             <button
                 key={label}
-                onClick={() => setIsToday(value)}
+                onClick={() => {
+                    setIsToday(value);
+                    if (!value && onPickDate) {
+                        setTimeout(() => onPickDate(), 50); // Delay agar input sudah render
+                    }
+                }}
                 className={`flex items-center gap-2 rounded-lg border-2 px-4 py-2 ${
-                    isToday === value ? 'border-blue-500 bg-blue-50 text-blue-700' : 'border-gray-200'
+                    isToday === value ? 'border-primary bg-primary/10 text-primary' : 'border-gray-200'
                 }`}
             >
                 <Icon size={16} />
