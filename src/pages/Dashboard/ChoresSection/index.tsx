@@ -18,7 +18,6 @@ export default function ChoresSection() {
 
     const [showAddChore, setShowAddChore] = useState(false);
     const [editingChore, setEditingChore] = useState<Chore | null>(null);
-    const [selectedChore, setSelectedChore] = useState<Chore | null>(null);
     const dateInputRef = useRef<HTMLInputElement>(null);
     const [showActions, setShowActions] = useState<string | null>(null);
 
@@ -72,7 +71,6 @@ export default function ChoresSection() {
                     dueTime: safeDueTime,
                 });
                 setEditingChore(null);
-                setSelectedChore(null);
             } else {
                 const today = new Date().toISOString().split('T')[0];
                 await addChore({
@@ -110,7 +108,6 @@ export default function ChoresSection() {
         try {
             await deleteChore(id);
             setShowActions(null);
-            setSelectedChore(null);
         } catch (error) {
             console.error('Error deleting chore:', error);
         }
@@ -202,7 +199,6 @@ export default function ChoresSection() {
                                 onToggleCompletion={() => handleToggleCompletion(chore.id, chore.isCompleted)}
                                 onEdit={() => {
                                     setEditingChore({ ...chore });
-                                    setSelectedChore(chore);
                                     setShowActions(null);
                                     setShowAddChore(true);
                                 }}
