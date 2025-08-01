@@ -3,7 +3,7 @@ import { id } from 'date-fns/locale';
 import { Calendar } from 'lucide-react';
 
 type Props = {
-    date: string;
+    date: string | number | undefined;
     onChange: (value: string) => void;
     inputRef: React.RefObject<HTMLInputElement>;
 };

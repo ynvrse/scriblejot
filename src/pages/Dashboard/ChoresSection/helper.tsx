@@ -20,7 +20,7 @@ export const availableIcons = [
 
 // ===== TimeInput Component =====
 interface TimeInputProps {
-    value: string;
+    value: any;
     onChange: (value: string) => void;
 }
 
@@ -158,8 +158,8 @@ interface ChoreCardProps {
     onToggleCompletion: () => void;
     onEdit: () => void;
     onDelete: () => void;
-    formatDate: (d: string) => string;
-    formatTime: (t: string) => string;
+    formatDate: (d: any) => any;
+    formatTime: (t: any) => any;
     IconComponent: FC<{ name: string; size?: number; className?: string }>;
 }
 
@@ -233,8 +233,8 @@ interface AddChoreModalProps {
     newChore: Omit<Chore, 'id' | 'createdAt' | 'updatedAt'>;
     setNewChore: React.Dispatch<React.SetStateAction<Omit<Chore, 'id' | 'createdAt' | 'updatedAt'>>>;
     setEditingChore: React.Dispatch<React.SetStateAction<Chore | null>>;
-    dateInputRef: React.RefObject<HTMLInputElement>;
-    inputRef: React.RefObject<HTMLInputElement>;
+    dateInputRef: any;
+    inputRef: any;
     onSave: () => void;
     onCancel: () => void;
 }
@@ -314,7 +314,7 @@ export const AddChoreModal: FC<AddChoreModalProps> = ({
             )}
 
             <TimeInput
-                value={(editingChore ?? newChore).dueTime}
+                value={(editingChore ?? newChore).dueTime?.toString()}
                 onChange={(t: string) => {
                     editingChore
                         ? setEditingChore({ ...editingChore, dueTime: t })

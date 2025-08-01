@@ -10,8 +10,7 @@ import ChoreHelpers from './helper';
 import { useChores, useChoresMutations } from './useChores';
 
 // Destructure components untuk kemudahan penggunaan
-const { TimeInput, DateChoiceButtons, IconSelector, EmptyState, ChoreCard, AddChoreModal, availableIcons } =
-    ChoreHelpers;
+const { EmptyState, ChoreCard, AddChoreModal } = ChoreHelpers;
 
 export default function ChoresSection() {
     const { chores, isLoading, error } = useChores();
@@ -36,7 +35,7 @@ export default function ChoresSection() {
         isCompleted: false,
     });
 
-    const inputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
         if (showAddChore) {
