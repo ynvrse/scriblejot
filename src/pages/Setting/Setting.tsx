@@ -95,7 +95,7 @@ export default function Profile() {
             console.error('Error uploading photo:', error);
         } finally {
             setIsUploading(false);
-            navigate('/profile');
+            navigate('/setting');
         }
     };
 
