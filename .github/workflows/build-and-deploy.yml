@@ -29,11 +29,11 @@ jobs:
             - name: Install dependencies
               run: npm install
 
-            - name: Inject env variables
+            - name: Set environment variables for Vite
               run: |
-                  echo "VITE_INSTANTDB_APP_ID=${{ secrets.VITE_INSTANTDB_APP_ID }}" >> $GITHUB_ENV
-                  echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}" >> $GITHUB_ENV
-                  echo "VITE_GOOGLE_CLIENT_NAME=${{ secrets.VITE_GOOGLE_CLIENT_NAME }}" >> $GITHUB_ENV
+                  echo "VITE_INSTANTDB_APP_ID=${{ secrets.VITE_INSTANTDB_APP_ID }}" >> .env
+                  echo "VITE_GOOGLE_CLIENT_ID=${{ secrets.VITE_GOOGLE_CLIENT_ID }}" >> .env
+                  echo "VITE_GOOGLE_CLIENT_NAME=${{ secrets.VITE_GOOGLE_CLIENT_NAME }}" >> .env
 
             - name: Build project
               run: npm run build
