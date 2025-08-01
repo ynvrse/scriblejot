@@ -73,19 +73,18 @@ export default function Profile() {
 
         setIsUploading(true);
         try {
-            // (Optional) Jangan hapus file lama karena list() belum tersedia
+            // Delete old profile pictures first
+            await deleteOldProfilePicture();
 
             // Create unique path with timestamp
             const timestamp = Date.now();
             const fileExtension = file.name.split('.').pop() || 'jpg';
             const path = `profiles/${user.id}/avatar_${timestamp}.${fileExtension}`;
 
-            // Upload file (PERBAIKAN DI SINI)
-            const { url } = await db.storage.upload(file, {
-                filename: path,
-            });
+            // Upload file
+            const { url } = await (db.storage as any).upload({ path, file });
 
-            // Simpan path ke profil user
+            // Store the path temporarily - useEffect will update with S3 URL automatically
             await db.transact([
                 db.tx.profiles[profile?.id || user.id].update({
                     profilePicture: url,

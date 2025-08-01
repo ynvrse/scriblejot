@@ -35,6 +35,7 @@
         "class-variance-authority": "^0.7.1",
         "clsx": "^2.1.1",
         "date-fns": "^4.1.0",
+        "instant-cli": "^0.20.16",
         "jotai": "^2.12.1",
         "lucide-react": "^0.532.0",
         "next-themes": "^0.4.6",
