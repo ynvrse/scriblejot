@@ -34,14 +34,14 @@ export default defineConfig(({ command }) => {
                     start_url: isProd ? `${basenameProd}` : '/',
                     icons: [
                         {
-                            src: `${basenameProd}pwa-192x192.svg`,
+                            src: `${basenameProd}pwa-192x192.png`,
                             sizes: '192x192',
-                            type: 'image/svg',
+                            type: 'image/png',
                         },
                         {
-                            src: `${basenameProd}pwa-512x512.svg`,
+                            src: `${basenameProd}pwa-512x512.png`,
                             sizes: '512x512',
-                            type: 'image/svg',
+                            type: 'image/png',
                         },
                         {
                             src: `${basenameProd}maskable_icon_x512.png`,
