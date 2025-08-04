@@ -42,11 +42,20 @@ const schema = i.schema({
             createdAt: i.date().indexed(),
             updatedAt: i.date().optional(),
         }),
-        shoping_lists: i.entity({
-            item: i.string(),
+
+        quick_lists: i.entity({
+            title: i.string(),
             user_id: i.string().indexed(),
-            isCompleted: i.boolean(),
             createdAt: i.date().indexed(),
+            updatedAt: i.date().optional(),
+            isArchived: i.boolean().optional(),
+        }),
+        quick_list_items: i.entity({
+            item: i.string(),
+            isCompleted: i.boolean().optional(),
+            order: i.number().indexed(),
+            createdAt: i.date().indexed(),
+            updatedAt: i.date().optional(),
         }),
     },
     links: {
@@ -64,6 +73,11 @@ const schema = i.schema({
             forward: { on: 'comments', has: 'one', label: 'commentAuthor' },
             reverse: { on: 'profiles', has: 'many', label: 'writtenComments' },
         },
+
+        quickListToItems: {
+            forward: { on: 'quick_lists', has: 'many', label: 'items' },
+            reverse: { on: 'quick_list_items', has: 'one', label: 'parentList' },
+        },
     },
 });
 
@@ -71,7 +85,8 @@ export type Profile = InstaQLEntity<typeof schema, 'profiles'>;
 export type Note = InstaQLEntity<typeof schema, 'notes'>;
 export type Comment = InstaQLEntity<typeof schema, 'comments'>;
 export type Chore = InstaQLEntity<typeof schema, 'chores'>;
-export type ShopingList = InstaQLEntity<typeof schema, 'shoping_lists'>;
+export type Quicklist = InstaQLEntity<typeof schema, 'quick_lists'>;
+export type QuicklistItem = InstaQLEntity<typeof schema, 'quick_list_items'>;
 
 const db = init({ appId: APP_ID, schema });
 const room = db.room('todos');

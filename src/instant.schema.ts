@@ -43,11 +43,20 @@ const _schema = i.schema({
             updatedAt: i.date().optional(),
             userId: i.string().optional(),
         }),
-        shoping_lists: i.entity({
-            createdAt: i.number().optional(),
+
+        quick_lists: i.entity({
+            title: i.string(),
+            user_id: i.string().indexed(),
+            createdAt: i.date().indexed(),
+            updatedAt: i.date().optional(),
+            isArchived: i.boolean().optional(),
+        }),
+        quick_list_items: i.entity({
+            item: i.string(),
             isCompleted: i.boolean().optional(),
-            item: i.string().optional(),
-            user_id: i.string().optional(),
+            order: i.number().indexed(),
+            createdAt: i.date().indexed(),
+            updatedAt: i.date().optional(),
         }),
         todos: i.entity({
             createdAt: i.number().optional(),
@@ -69,6 +78,10 @@ const _schema = i.schema({
         commentToAuthor: {
             forward: { on: 'comments', has: 'one', label: 'commentAuthor' },
             reverse: { on: 'profiles', has: 'many', label: 'writtenComments' },
+        },
+        quickListToItems: {
+            forward: { on: 'quick_lists', has: 'many', label: 'items' },
+            reverse: { on: 'quick_list_items', has: 'one', label: 'parentList' },
         },
     },
     rooms: {},

@@ -3,7 +3,7 @@ import Login from '../Auth/Login';
 import ChoresSection from './ChoresSection';
 import GreetingsSection from './GreetingsSection';
 import NotesSection from './NotesSection';
-import ShopingLists from './ShopinListsSection';
+import QuickList from './QuickListsSection/QuickList';
 
 export default function Dashboard() {
     const { isLoading, user, error } = db.useAuth();
@@ -36,8 +36,8 @@ export default function Dashboard() {
                 {/* Chores Section */}
                 <ChoresSection />
 
-                {/* Shopping List Section */}
-                <ShopingLists />
+                {/* Quick List Section */}
+                <QuickList />
             </div>
         );
     }
