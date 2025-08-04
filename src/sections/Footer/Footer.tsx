@@ -1,5 +1,5 @@
 import { Button } from '@/components/ui/button';
-import { email, github, version } from '@/config';
+import { email, github, repoName, version } from '@/config';
 import { Github, Mail } from 'lucide-react';
 
 export default function Footer() {
@@ -15,7 +15,7 @@ export default function Footer() {
                     {/* Right side */}
                     <div className="flex items-center gap-4">
                         <Button variant="ghost" size="sm" asChild>
-                            <a href={`mailto:${email}`}>
+                            <a href={`mailto:${email}/?subject=${repoName}`}>
                                 <Mail size={16} />
                             </a>
                         </Button>
