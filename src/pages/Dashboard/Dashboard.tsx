@@ -1,4 +1,5 @@
 import { db } from '@/hooks/useInstantDb';
+import Footer from '@/sections/Footer';
 import Login from '../Auth/Login';
 import ChoresSection from './ChoresSection';
 import GreetingsSection from './GreetingsSection';
@@ -38,6 +39,7 @@ export default function Dashboard() {
 
                 {/* Quick List Section */}
                 <QuickList />
+                <Footer />
             </div>
         );
     }

@@ -7,6 +7,7 @@ import { Camera, Edit2, LogOut, Save, Trash2, User, X } from 'lucide-react';
 
 import { db } from '@/hooks/useInstantDb';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import Footer from '@/sections/Footer';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -325,6 +326,8 @@ export default function Profile() {
                         </Button>
                     </CardContent>
                 </Card>
+
+                <Footer />
             </div>
         </>
     );

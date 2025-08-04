@@ -24,11 +24,14 @@ export default function QuickList() {
                               user_id: user.id,
                               isArchived: false,
                           },
+                          order: {
+                              createdAt: 'desc',
+                          },
                       },
                       items: {
                           $: {
                               order: {
-                                  createdAt: 'asc',
+                                  createdAt: 'desc',
                               },
                           },
                       },
@@ -299,6 +302,12 @@ export default function QuickList() {
                     <List size={18} />
                     <h2 className="text-lg font-semibold">Quick Lists</h2>
                 </div>
+                {quickLists.length > 0 && (
+                    <Button onClick={createNewQuickList} size="sm" variant="outline">
+                        <Plus size={16} className="mr-1" />
+                        New List
+                    </Button>
+                )}
             </div>
 
             {/* Loading/Error States */}
@@ -345,7 +354,7 @@ export default function QuickList() {
             {!isLoading && !error && quickLists.length > 0 && (
                 <>
                     {/* Quick Lists Tabs */}
-                    <div className="mb-4 flex flex-wrap gap-2">
+                    <div className="scrollbar-hide flex space-x-4 overflow-x-auto pb-4">
                         {quickLists.map((list: any) => (
                             <Button
                                 key={list.id}
@@ -368,10 +377,6 @@ export default function QuickList() {
                                 )}
                             </Button>
                         ))}
-                        <Button onClick={createNewQuickList} size="sm" variant="outline">
-                            <PlusCircle size={16} className="mr-1" />
-                            New List
-                        </Button>
                     </div>
 
                     {/* Main Card */}
