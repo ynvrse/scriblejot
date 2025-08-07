@@ -7,7 +7,9 @@ import { Card } from '@/components/ui/card';
 import formatRelativeTime from '@/lib/utils';
 import { isValid } from 'date-fns';
 import * as Icons from 'lucide-react';
-import { memo, useCallback } from 'react';
+import { memo } from 'react';
+import CommentItem from './CommentItem';
+import NoteCard from './NoteCard';
 import { Comment, Note, useNoteSection } from './useNoteSection';
 
 // Memoized utility function to format dates
@@ -74,114 +76,6 @@ const EmptyState = memo(({ onAddNote, disabled }: { onAddNote: () => void; disab
         </Button>
     </div>
 ));
-
-// Memoized Note Card Component
-const NoteCard = memo(
-    ({
-        note,
-        onSelect,
-        currentProfileId,
-    }: {
-        note: Note;
-        onSelect: (note: Note) => void;
-        currentProfileId?: string;
-    }) => {
-        const handleClick = useCallback(() => {
-            onSelect(note);
-        }, [note, onSelect]);
-
-        const { getProfilePictureUrl } = useNoteSection();
-
-        return (
-            <Card
-                className="relative flex max-w-[250px] min-w-[250px] flex-shrink-0 cursor-pointer items-start gap-3 p-4 transition-shadow duration-200 hover:shadow-md"
-                onClick={handleClick}
-            >
-                {/* Privacy indicator */}
-                <div className="absolute top-2 right-2 flex gap-2 text-xs text-gray-500">
-                    {note.isPublic ? <Icons.Globe size={12} className="text-green-700" /> : <Icons.Lock size={12} />}
-                    {note.noteComments && note.noteComments.length > 0 && (
-                        <div className="flex items-center gap-1 text-xs text-gray-500">
-                            <Icons.MessageSquare size={12} />
-                            {note.noteComments.length}
-                        </div>
-                    )}
-                </div>
-
-                <Avatar className="h-10 w-10 flex-shrink-0">
-                    <AvatarImage src={getProfilePictureUrl(note.noteAuthor?.[0]) || 'avatar'} />
-                    <AvatarFallback>
-                        {note.noteAuthor?.[0]?.fullName?.[0] || note.noteAuthor?.[0]?.firstName?.[0] || 'U'}
-                    </AvatarFallback>
-                </Avatar>
-
-                <div className="min-w-0 flex-1 pt-1">
-                    <div className="mb-2 flex items-center gap-2">
-                        <h3 className="truncate font-serif text-sm">
-                            {note.noteAuthor?.[0]?.id == currentProfileId
-                                ? 'Anda'
-                                : note.noteAuthor?.[0]?.fullName || note.noteAuthor?.[0]?.firstName || 'Anonymous'}
-                        </h3>
-                        <span className="text-xs text-gray-400">•</span>
-                        <span className="line-clamp-1 font-mono text-xs">{formatDate(note.createdAt)}</span>
-                    </div>
-                    {/* {note.title && <h4 className="mb-1 line-clamp-1 text-sm font-semibold text-gray-800">{note.title}</h4>} */}
-                    <p className="line-clamp-3 text-sm leading-relaxed break-words">{note.content}</p>
-                </div>
-            </Card>
-        );
-    },
-);
-
-// Memoized Comment Component
-const CommentItem = memo(({ comment, currentProfileId }: { comment: Comment; currentProfileId?: string }) => {
-    const { getProfilePictureUrl } = useNoteSection();
-
-    // Default anggap komen milik sendiri jika belum ada author
-    const isOwnComment = !comment.commentAuthor?.[0]?.id || comment.commentAuthor?.[0]?.id === currentProfileId;
-
-    const isLeft = comment.commentAuthor?.[0]?.id && comment.commentAuthor?.[0]?.id !== currentProfileId;
-
-    return (
-        <div className={`flex items-start gap-3 ${isOwnComment ? 'justify-end' : ''}`}>
-            {isLeft && (
-                <Avatar className="h-8 w-8">
-                    <AvatarImage src={getProfilePictureUrl(comment.commentAuthor?.[0]) || 'avatar'} />
-                    <AvatarFallback>
-                        {comment.commentAuthor?.[0]?.fullName || comment.commentAuthor?.[0]?.firstName?.[0] || 'U'}
-                    </AvatarFallback>
-                </Avatar>
-            )}
-
-            <div
-                className={`max-w-[75%] min-w-[150px] rounded-lg p-2 text-sm break-words ${
-                    isLeft ? 'self-end bg-blue-100 text-left' : 'self-end bg-gray-200'
-                }`}
-            >
-                <p className="font-serif text-black">
-                    {isOwnComment
-                        ? 'Anda'
-                        : comment.commentAuthor?.[0]?.fullName || comment.commentAuthor?.[0]?.firstName || 'Anonymous'}
-                </p>
-
-                <p className="text-xs text-gray-500">{formatDate(comment.createdAt)}</p>
-
-                <p className="mt-2 text-left leading-relaxed break-words whitespace-pre-wrap text-gray-800">
-                    {comment.content}
-                </p>
-            </div>
-
-            {isOwnComment && (
-                <Avatar className="h-8 w-8">
-                    <AvatarImage src={getProfilePictureUrl(comment.commentAuthor?.[0]) || 'avatar'} />
-                    <AvatarFallback>
-                        <Icons.User />
-                    </AvatarFallback>
-                </Avatar>
-            )}
-        </div>
-    );
-});
 
 export default function NotesSection() {
     const {
@@ -467,10 +361,8 @@ export default function NotesSection() {
                                     </div>
 
                                     {/* Note content */}
-                                    <div className="rounded-lg bg-green-50 p-4">
-                                        <p className="leading-relaxed whitespace-pre-wrap text-gray-700">
-                                            {selectedNote.content}
-                                        </p>
+                                    <div className="rounded-lg p-4">
+                                        <p className="leading-relaxed whitespace-pre-wrap">{selectedNote.content}</p>
                                     </div>
 
                                     {/* Action buttons - mobile optimized */}
@@ -508,7 +400,7 @@ export default function NotesSection() {
                         </div>
 
                         {/* Scrollable Content */}
-                        <div className="flex-1 overflow-y-auto">
+                        <div className="bg-background/30 flex-1 overflow-y-auto">
                             <div className="p-4 sm:p-6">
                                 {/* Comments Section */}
                                 <div className="mt-6 flex flex-col gap-3">
