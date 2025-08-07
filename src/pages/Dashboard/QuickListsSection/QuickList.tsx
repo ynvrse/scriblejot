@@ -3,8 +3,22 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { db, Quicklist, QuicklistItem } from '@/hooks/useInstantDb';
 import { id } from '@instantdb/react';
-import { Activity, Check, Download, Edit3, List, Notebook, Pencil, Plus, PlusCircle, Trash, X } from 'lucide-react';
+import {
+    Activity,
+    ArrowUpDown,
+    Check,
+    Download,
+    Edit3,
+    List,
+    Notebook,
+    Pencil,
+    Plus,
+    PlusCircle,
+    Trash,
+    X,
+} from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { useQuickLists } from './useQuickLists';
 
 export default function QuickList() {
     const { user } = db.useAuth();
@@ -14,31 +28,7 @@ export default function QuickList() {
     const [editingTitle, setEditingTitle] = useState('');
     const scrollRef = useRef<HTMLDivElement>(null);
 
-    // Get all quick lists for current user
-    const { data, isLoading, error } = db.useQuery(
-        user
-            ? {
-                  quick_lists: {
-                      $: {
-                          where: {
-                              user_id: user.id,
-                              isArchived: false,
-                          },
-                          order: {
-                              createdAt: 'desc',
-                          },
-                      },
-                      items: {
-                          $: {
-                              order: {
-                                  createdAt: 'desc',
-                              },
-                          },
-                      },
-                  },
-              }
-            : null,
-    );
+    const { data, isLoading, error, downloadAsImage, toggleSort } = useQuickLists(user);
 
     const quickLists = data?.quick_lists || [];
     const currentQuickList = selectedListId ? quickLists.find((list) => list.id === selectedListId) : quickLists[0];
@@ -161,138 +151,6 @@ export default function QuickList() {
 
     const deleteQuickListItem = (item: QuicklistItem) => {
         db.transact(db.tx.quick_list_items[item.id].delete());
-    };
-
-    const downloadAsImage = async (list: any) => {
-        const items = list.items || [];
-        if (!items.length) return;
-
-        try {
-            const canvas = document.createElement('canvas');
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-
-            // Set canvas size
-            const width = 400;
-            const itemHeight = 50;
-            const headerHeight = 120;
-            const footerHeight = 60;
-            const padding = 20;
-            const height = headerHeight + items.length * itemHeight + footerHeight + padding * 2;
-
-            canvas.width = width;
-            canvas.height = height;
-
-            // Set background
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(0, 0, width, height);
-
-            let y = padding;
-
-            // Header
-            ctx.fillStyle = '#1f2937';
-            ctx.font = 'bold 24px system-ui, -apple-system, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(`📝 ${list.title || 'Quick List'}`, width / 2, y + 30);
-
-            ctx.font = '14px system-ui, -apple-system, sans-serif';
-            ctx.fillStyle = '#6b7280';
-            ctx.fillText(formatDate(Date.now()), width / 2, y + 60);
-
-            y += headerHeight;
-
-            // Items
-            ctx.textAlign = 'left';
-            ctx.font = '16px system-ui, -apple-system, sans-serif';
-
-            items.forEach((item: QuicklistItem, index: number) => {
-                const itemY = y + index * itemHeight;
-
-                // Draw item border
-                ctx.strokeStyle = '#d1d5db';
-                ctx.lineWidth = 1;
-                ctx.strokeRect(padding, itemY, width - padding * 2, itemHeight - 5);
-
-                // Draw checkbox
-                const checkboxX = padding + 15;
-                const checkboxY = itemY + itemHeight / 2;
-                const checkboxSize = 20;
-
-                if (item.isCompleted) {
-                    ctx.fillStyle = '#10b981';
-                    ctx.fillRect(
-                        checkboxX - checkboxSize / 2,
-                        checkboxY - checkboxSize / 2,
-                        checkboxSize,
-                        checkboxSize,
-                    );
-                    ctx.fillStyle = '#ffffff';
-                    ctx.font = 'bold 14px system-ui';
-                    ctx.textAlign = 'center';
-                    ctx.fillText('✓', checkboxX, checkboxY);
-                } else {
-                    ctx.strokeStyle = '#d1d5db';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(
-                        checkboxX - checkboxSize / 2,
-                        checkboxY - checkboxSize / 2,
-                        checkboxSize,
-                        checkboxSize,
-                    );
-                }
-
-                // Draw item text
-                ctx.textAlign = 'left';
-                ctx.font = '16px system-ui, -apple-system, sans-serif';
-                ctx.fillStyle = item.isCompleted ? '#9ca3af' : '#374151';
-
-                const text = `${index + 1}. ${item.item}`;
-                ctx.fillText(text, checkboxX + 35, checkboxY);
-
-                // Draw line through if completed
-                if (item.isCompleted) {
-                    const textWidth = ctx.measureText(text).width;
-                    ctx.strokeStyle = '#9ca3af';
-                    ctx.lineWidth = 1;
-                    ctx.beginPath();
-                    ctx.moveTo(checkboxX + 35, checkboxY);
-                    ctx.lineTo(checkboxX + 35 + textWidth, checkboxY);
-                    ctx.stroke();
-                }
-            });
-
-            // Footer
-            const footerY = y + items.length * itemHeight + 20;
-            ctx.strokeStyle = '#e5e7eb';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(padding, footerY);
-            ctx.lineTo(width - padding, footerY);
-            ctx.stroke();
-
-            ctx.font = '12px system-ui, -apple-system, sans-serif';
-            ctx.fillStyle = '#9ca3af';
-            ctx.textAlign = 'center';
-            const completed = items.filter((item: QuicklistItem) => item.isCompleted).length;
-            ctx.fillText(`Total items: ${items.length} | Completed: ${completed}`, width / 2, footerY + 30);
-
-            // Download
-            const link = document.createElement('a');
-            link.download = `${(list.title || 'quick-list').toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.png`;
-            link.href = canvas.toDataURL('image/png', 0.9);
-            link.click();
-        } catch (error) {
-            console.error('Error downloading image:', error);
-        }
-    };
-
-    const formatDate = (timestamp: number) => {
-        return new Date(timestamp).toLocaleDateString('id-ID', {
-            weekday: 'long',
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-        });
     };
 
     return (
@@ -446,13 +304,15 @@ export default function QuickList() {
                                         className="flex-1"
                                         disabled={isLoading || !currentQuickList}
                                     />
-                                    <Button
-                                        onClick={addQuickListItem}
-                                        size="sm"
-                                        disabled={isLoading || !newItem.trim() || !currentQuickList}
-                                    >
-                                        <Plus size={16} />
-                                    </Button>
+                                    {quickListItems.length >= 2 && (
+                                        <Button
+                                            onClick={() => toggleSort()}
+                                            size="sm"
+                                            disabled={isLoading || quickListItems.length < 2}
+                                        >
+                                            <ArrowUpDown size={16} />
+                                        </Button>
+                                    )}
                                 </div>
 
                                 {/* Delete Completed Button */}

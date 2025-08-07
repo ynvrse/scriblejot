@@ -6,6 +6,10 @@ const APP_ID = env.instantDbAppId;
 
 const schema = i.schema({
     entities: {
+        $files: i.entity({
+            path: i.string().unique().indexed(),
+            url: i.string(),
+        }),
         profiles: i.entity({
             firstName: i.string().optional(),
             lastName: i.string().optional(),

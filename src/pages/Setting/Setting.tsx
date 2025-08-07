@@ -12,7 +12,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
-    const { user, profile, isLoading } = useUserProfile();
+    const { user, profile, avatar, isLoading } = useUserProfile();
     const navigate = useNavigate();
 
     const [isEditing, setIsEditing] = useState(false);
@@ -22,6 +22,16 @@ export default function Profile() {
         lastName: '',
         fullName: '',
     });
+
+    // const { data } = db.useQuery({
+    //     $files: {
+    //         $: {
+    //             where: {
+    //                 path: profile?.profilePicture,
+    //             },
+    //         },
+    //     },
+    // });
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -54,18 +64,11 @@ export default function Profile() {
     };
 
     const deleteOldProfilePicture = async () => {
-        if (!user?.id) return;
+        if (!profile?.profilePicture) return; // pastikan ada file yang akan dihapus
         try {
-            const { files } = await (db.storage as any).list({ path: `profiles/${user.id}` });
-            // Find and delete old profile pictures
-            const oldProfileFiles = files.filter((file: any) => file.path.startsWith(`profiles/${user?.id}/avatar`));
-
-            for (const file of oldProfileFiles) {
-                await (db.storage as any).delete(file.path);
-            }
+            await db.storage.delete(profile.profilePicture); // Hapus berdasarkan path yang disimpan
         } catch (error) {
-            console.warn('Failed to delete old profile pictures:', error);
-            // Don't throw error, just log warning as this is cleanup
+            console.error('Failed to delete old profile picture:', error);
         }
     };
 
@@ -74,21 +77,26 @@ export default function Profile() {
 
         setIsUploading(true);
         try {
-            // Delete old profile pictures first
+            // 1. Hapus gambar lama jika ada
             await deleteOldProfilePicture();
 
-            // Create unique path with timestamp
+            // 2. Buat path unik
             const timestamp = Date.now();
             const fileExtension = file.name.split('.').pop() || 'jpg';
             const path = `profiles/${user.id}/avatar_${timestamp}.${fileExtension}`;
 
-            // Upload file
-            const { url } = await (db.storage as any).upload({ path, file });
+            const opts = {
+                contentType: file.type,
+                contentDisposition: 'inline', // bisa diganti jadi 'attachment' jika ingin diunduh
+            };
 
-            // Store the path temporarily - useEffect will update with S3 URL automatically
+            // 3. Upload file (menggunakan API yang sesuai dokumentasi)
+            await db.storage.uploadFile(path, file, opts);
+
+            // 4. Simpan path file, bukan URL (nanti query ke $files bisa ambil URL)
             await db.transact([
                 db.tx.profiles[profile?.id || user.id].update({
-                    profilePicture: url,
+                    profilePicture: path,
                     updatedAt: new Date().toISOString(),
                 }),
             ]);
@@ -189,11 +197,12 @@ export default function Profile() {
             <div className="mx-auto max-w-2xl space-y-6">
                 {/* Profile Picture Card */}
                 <Card>
+                    {}
                     <CardHeader className="text-center">
                         <div className="relative mx-auto">
                             <Avatar className="mx-auto h-24 w-24">
                                 <AvatarImage
-                                    src={profile?.profilePicture || ''}
+                                    src={avatar || 'avatar'}
                                     alt={profile?.fullName || user?.email || 'User'}
                                 />
                                 <AvatarFallback className="text-lg">

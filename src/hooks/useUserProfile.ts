@@ -13,13 +13,17 @@ export const useUserProfile = () => {
                           },
                       },
                   },
+                  $files: {},
               }
             : null,
     );
 
     const profile = data?.profiles?.[0] ?? null;
 
+    const avatar = data?.$files?.find((file) => file.path === profile?.profilePicture)?.url;
+
     return {
+        avatar,
         user,
         profile,
         isLoading: authLoading || queryLoading,
