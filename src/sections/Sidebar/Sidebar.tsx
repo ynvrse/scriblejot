@@ -10,17 +10,14 @@ import { useSidebar } from './hooks';
 
 export default function Sidebar() {
     const { isOpen, close } = useSidebar();
-    const { user, profile } = useUserProfile();
+    const { user, profile, avatar } = useUserProfile();
     return (
         <Sheet open={isOpen} onOpenChange={(open) => !open && close()}>
             <SheetContent side="left" className="w-[250px] pt-10">
                 <SheetHeader>
                     <SheetTitle className="flex items-center justify-start">
                         <Avatar className="h-12 w-12">
-                            <AvatarImage
-                                src={profile?.profilePicture || ''}
-                                alt={profile?.fullName || user?.email || 'User'}
-                            />
+                            <AvatarImage src={avatar} alt={profile?.fullName || user?.email || 'User'} />
                             <AvatarFallback className="text-lg">
                                 {profile?.firstName?.charAt(0) || user?.email?.charAt(0) || <User size={24} />}
                             </AvatarFallback>
