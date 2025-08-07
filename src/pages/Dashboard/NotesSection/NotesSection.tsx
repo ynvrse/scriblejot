@@ -4,50 +4,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { db } from '@/hooks/useInstantDb';
-import { useUserProfile } from '@/hooks/useUserProfile';
-
 import formatRelativeTime from '@/lib/utils';
-
-import { id, tx } from '@instantdb/react';
-import { isValid, parseISO } from 'date-fns';
+import { isValid } from 'date-fns';
 import * as Icons from 'lucide-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-
-// Type declarations
-type Comment = {
-    id: string;
-    content: string;
-    createdAt: Date;
-    updatedAt?: Date;
-    commentAuthor: {
-        id: string;
-        firstName?: string;
-        lastName?: string;
-        fullName?: string;
-        profilePicture?: string;
-        email?: string;
-    }[];
-};
-
-type Note = {
-    id: string;
-    title: string;
-    content: string;
-    isPublic?: boolean;
-    tags?: any;
-    createdAt: Date;
-    updatedAt?: Date;
-    noteAuthor: {
-        id: string;
-        firstName?: string;
-        lastName?: string;
-        fullName?: string;
-        profilePicture?: string;
-        email?: string;
-    }[];
-    noteComments: Comment[];
-};
+import { memo, useCallback } from 'react';
+import { Comment, Note, useNoteSection } from './useNoteSection';
 
 // Memoized utility function to format dates
 const formatDate = (date: Date) => {
@@ -56,7 +17,6 @@ const formatDate = (date: Date) => {
     return formatRelativeTime(date);
 };
 
-// Memoized Empty State Component
 const EmptyState = memo(({ onAddNote, disabled }: { onAddNote: () => void; disabled: boolean }) => (
     <div className="flex flex-col items-center justify-center px-8 py-16">
         <div className="relative mb-6">
@@ -116,61 +76,77 @@ const EmptyState = memo(({ onAddNote, disabled }: { onAddNote: () => void; disab
 ));
 
 // Memoized Note Card Component
-const NoteCard = memo(({ note, onSelect }: { note: Note; onSelect: (note: Note) => void }) => {
-    const { profile: currentProfile } = useUserProfile();
-    const handleClick = useCallback(() => {
-        onSelect(note);
-    }, [note, onSelect]);
+const NoteCard = memo(
+    ({
+        note,
+        onSelect,
+        currentProfileId,
+    }: {
+        note: Note;
+        onSelect: (note: Note) => void;
+        currentProfileId?: string;
+    }) => {
+        const handleClick = useCallback(() => {
+            onSelect(note);
+        }, [note, onSelect]);
 
-    return (
-        <Card
-            className="relative flex max-w-[250px] min-w-[250px] flex-shrink-0 cursor-pointer items-start gap-3 p-4 transition-shadow duration-200 hover:shadow-md"
-            onClick={handleClick}
-        >
-            {/* Privacy indicator */}
-            <div className="absolute top-2 right-2 flex gap-2 text-xs text-gray-500">
-                {note.isPublic ? <Icons.Globe size={12} className="text-green-700" /> : <Icons.Lock size={12} />}
-                {note.noteComments && note.noteComments.length > 0 && (
-                    <div className="flex items-center gap-1 text-xs text-gray-500">
-                        <Icons.MessageSquare size={12} />
-                        {note.noteComments.length}
-                    </div>
-                )}
-            </div>
+        const { getProfilePictureUrl } = useNoteSection();
 
-            <Avatar className="h-10 w-10 flex-shrink-0">
-                <AvatarImage src={note.noteAuthor?.[0]?.profilePicture} />
-                <AvatarFallback>
-                    {note.noteAuthor?.[0]?.fullName?.[0] || note.noteAuthor?.[0]?.firstName?.[0] || 'U'}
-                </AvatarFallback>
-            </Avatar>
-
-            <div className="min-w-0 flex-1 pt-1">
-                <div className="mb-2 flex items-center gap-2">
-                    <h3 className="truncate font-serif text-sm">
-                        {note.noteAuthor?.[0]?.id == currentProfile?.id
-                            ? 'Anda'
-                            : note.noteAuthor?.[0]?.fullName || note.noteAuthor?.[0]?.firstName || 'Anonymous'}
-                    </h3>
-                    <span className="text-xs text-gray-400">•</span>
-                    <span className="line-clamp-1 font-mono text-xs">{formatDate(note.createdAt)}</span>
+        return (
+            <Card
+                className="relative flex max-w-[250px] min-w-[250px] flex-shrink-0 cursor-pointer items-start gap-3 p-4 transition-shadow duration-200 hover:shadow-md"
+                onClick={handleClick}
+            >
+                {/* Privacy indicator */}
+                <div className="absolute top-2 right-2 flex gap-2 text-xs text-gray-500">
+                    {note.isPublic ? <Icons.Globe size={12} className="text-green-700" /> : <Icons.Lock size={12} />}
+                    {note.noteComments && note.noteComments.length > 0 && (
+                        <div className="flex items-center gap-1 text-xs text-gray-500">
+                            <Icons.MessageSquare size={12} />
+                            {note.noteComments.length}
+                        </div>
+                    )}
                 </div>
-                {/* {note.title && <h4 className="mb-1 line-clamp-1 text-sm font-semibold text-gray-800">{note.title}</h4>} */}
-                <p className="line-clamp-3 text-sm leading-relaxed break-words">{note.content}</p>
-            </div>
-        </Card>
-    );
-});
+
+                <Avatar className="h-10 w-10 flex-shrink-0">
+                    <AvatarImage src={getProfilePictureUrl(note.noteAuthor?.[0]) || 'avatar'} />
+                    <AvatarFallback>
+                        {note.noteAuthor?.[0]?.fullName?.[0] || note.noteAuthor?.[0]?.firstName?.[0] || 'U'}
+                    </AvatarFallback>
+                </Avatar>
+
+                <div className="min-w-0 flex-1 pt-1">
+                    <div className="mb-2 flex items-center gap-2">
+                        <h3 className="truncate font-serif text-sm">
+                            {note.noteAuthor?.[0]?.id == currentProfileId
+                                ? 'Anda'
+                                : note.noteAuthor?.[0]?.fullName || note.noteAuthor?.[0]?.firstName || 'Anonymous'}
+                        </h3>
+                        <span className="text-xs text-gray-400">•</span>
+                        <span className="line-clamp-1 font-mono text-xs">{formatDate(note.createdAt)}</span>
+                    </div>
+                    {/* {note.title && <h4 className="mb-1 line-clamp-1 text-sm font-semibold text-gray-800">{note.title}</h4>} */}
+                    <p className="line-clamp-3 text-sm leading-relaxed break-words">{note.content}</p>
+                </div>
+            </Card>
+        );
+    },
+);
 
 // Memoized Comment Component
 const CommentItem = memo(({ comment, currentProfileId }: { comment: Comment; currentProfileId?: string }) => {
-    const isOwnComment = comment.commentAuthor?.[0]?.id === currentProfileId;
+    const { getProfilePictureUrl } = useNoteSection();
+
+    // Default anggap komen milik sendiri jika belum ada author
+    const isOwnComment = !comment.commentAuthor?.[0]?.id || comment.commentAuthor?.[0]?.id === currentProfileId;
+
+    const isLeft = comment.commentAuthor?.[0]?.id && comment.commentAuthor?.[0]?.id !== currentProfileId;
 
     return (
-        <div className={`flex items-start gap-3 ${!isOwnComment ? '' : 'justify-end'}`}>
-            {!isOwnComment && (
+        <div className={`flex items-start gap-3 ${isOwnComment ? 'justify-end' : ''}`}>
+            {isLeft && (
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={comment.commentAuthor?.[0]?.profilePicture} />
+                    <AvatarImage src={getProfilePictureUrl(comment.commentAuthor?.[0]) || 'avatar'} />
                     <AvatarFallback>
                         {comment.commentAuthor?.[0]?.fullName || comment.commentAuthor?.[0]?.firstName?.[0] || 'U'}
                     </AvatarFallback>
@@ -179,8 +155,8 @@ const CommentItem = memo(({ comment, currentProfileId }: { comment: Comment; cur
 
             <div
                 className={`max-w-[75%] min-w-[150px] rounded-lg p-2 text-sm break-words ${
-                    isOwnComment ? 'self-end bg-blue-100 text-right' : 'self-start bg-gray-200'
-                } `}
+                    isLeft ? 'self-end bg-blue-100 text-left' : 'self-end bg-gray-200'
+                }`}
             >
                 <p className="font-serif text-black">
                     {isOwnComment
@@ -197,7 +173,7 @@ const CommentItem = memo(({ comment, currentProfileId }: { comment: Comment; cur
 
             {isOwnComment && (
                 <Avatar className="h-8 w-8">
-                    <AvatarImage src={comment.commentAuthor?.[0]?.profilePicture} />
+                    <AvatarImage src={getProfilePictureUrl(comment.commentAuthor?.[0]) || 'avatar'} />
                     <AvatarFallback>
                         <Icons.User />
                     </AvatarFallback>
@@ -208,221 +184,36 @@ const CommentItem = memo(({ comment, currentProfileId }: { comment: Comment; cur
 });
 
 export default function NotesSection() {
-    const { user, profile: currentProfile } = useUserProfile();
-    const [showAddNote, setShowAddNote] = useState(false);
-    const [editingMode, setEditingMode] = useState(false);
-    const [selectedNote, setSelectedNote] = useState<any>(null);
-    const [editingNote, setEditingNote] = useState<any>(null);
-    const [newNote, setNewNote] = useState({ title: '', content: '', isPublic: false });
-    const [newComment, setNewComment] = useState('');
-
-    const lastCommentRef = useRef<HTMLDivElement | null>(null);
-    const modalRef = useRef<HTMLDivElement | null>(null);
-
-    const textareaRef = useRef<HTMLTextAreaElement>(null);
-
-    useEffect(() => {
-        if (showAddNote) {
-            setTimeout(() => textareaRef.current?.focus(), 100);
-        }
-    }, [showAddNote]);
-
-    // Main query for notes - automatically updates in realtime
-    const query = db.useQuery({
-        notes: {
-            noteAuthor: {},
-            noteComments: {
-                commentAuthor: {},
-            },
-        },
-    });
-
-    // Separate query for realtime comments when a note is selected
-    const commentsQuery = db.useQuery(
-        selectedNote
-            ? {
-                  comments: {
-                      $: {
-                          where: {
-                              commentNote: selectedNote.id,
-                          },
-                      },
-                      commentAuthor: {},
-                  },
-              }
-            : null,
-    );
-
-    const { data, isLoading, error } = query;
-    const notes = data?.notes || [];
-
-    // Memoize parsed notes to avoid unnecessary recalculations
-    const parsedNotes = useMemo(() => {
-        const parsed = notes.map((note) => ({
-            ...note,
-            createdAt: typeof note.createdAt === 'string' ? parseISO(note.createdAt) : note.createdAt,
-            updatedAt: typeof note.updatedAt === 'string' ? parseISO(note.updatedAt) : note.updatedAt,
-            noteComments: note.noteComments.map((comment) => ({
-                ...comment,
-                createdAt: typeof comment.createdAt === 'string' ? parseISO(comment.createdAt) : comment.createdAt,
-                updatedAt: typeof comment.updatedAt === 'string' ? parseISO(comment.updatedAt) : comment.updatedAt,
-            })),
-        }));
-
-        // Urutkan berdasarkan createdAt terbaru
-        return parsed.sort((a, b) => {
-            const dateA = new Date(a.createdAt).getTime();
-            const dateB = new Date(b.createdAt).getTime();
-            return dateB - dateA; // Descending: terbaru duluan
-        });
-    }, [notes]);
-
-    // Memoize filtered notes
-    const filteredNotes = useMemo(() => {
-        return parsedNotes.filter((note) => {
-            const author = Array.isArray(note.noteAuthor) ? note.noteAuthor[0] : note.noteAuthor;
-
-            return note.isPublic || author?.id === currentProfile?.id;
-        });
-    }, [parsedNotes, currentProfile?.id]);
-
-    // Update selected note with realtime comments
-    useEffect(() => {
-        if (selectedNote && commentsQuery.data?.comments) {
-            const updatedNote = {
-                ...selectedNote,
-                noteComments: commentsQuery.data.comments.map((comment) => ({
-                    ...comment,
-                    createdAt: typeof comment.createdAt === 'string' ? parseISO(comment.createdAt) : comment.createdAt,
-                    updatedAt: typeof comment.updatedAt === 'string' ? parseISO(comment.updatedAt) : comment.updatedAt,
-                })),
-            };
-            setSelectedNote(updatedNote);
-        }
-    }, [commentsQuery.data?.comments]);
-
-    const addNote = useCallback(async () => {
-        if (!(newNote.content ?? '').trim() || !user || !currentProfile) return;
-
-        try {
-            const noteId = id();
-            await db.transact([
-                tx.notes[noteId].update({
-                    title: newNote.title || 'Untitled',
-                    content: newNote.content,
-                    isPublic: newNote.isPublic,
-                    createdAt: new Date(),
-                }),
-                tx.notes[noteId].link({ noteAuthor: currentProfile.id }),
-            ]);
-
-            setNewNote({ title: '', content: '', isPublic: false });
-            setShowAddNote(false);
-        } catch (err) {
-            console.error('Error adding note:', err);
-        }
-    }, [newNote, user, currentProfile]);
-
-    const updateNote = useCallback(async () => {
-        if (!editingNote || !(editingNote.content ?? '').trim()) return;
-
-        try {
-            await db.transact([
-                tx.notes[editingNote.id].update({
-                    title: editingNote.title,
-                    content: editingNote.content,
-                    isPublic: editingNote.isPublic,
-                    updatedAt: new Date(),
-                }),
-            ]);
-
-            setEditingNote(null);
-            setSelectedNote(null);
-            setEditingMode(false);
-        } catch (error) {
-            console.error('Error updating note:', error);
-        }
-    }, [editingNote]);
-
-    const deleteNote = useCallback(
-        async (noteId: string) => {
-            try {
-                const noteToDelete = parsedNotes.find((n) => n.id === noteId);
-                if (noteToDelete?.noteComments) {
-                    const deleteCommentsTx = noteToDelete.noteComments.map((comment) =>
-                        tx.comments[comment.id].delete(),
-                    );
-                    await db.transact([...deleteCommentsTx, tx.notes[noteId].delete()]);
-                } else {
-                    await db.transact([tx.notes[noteId].delete()]);
-                }
-
-                setSelectedNote(null);
-                setEditingMode(false);
-            } catch (error) {
-                console.error('Error deleting note:', error);
-            }
-        },
-        [parsedNotes],
-    );
-
-    const addComment = useCallback(
-        async (e: React.FormEvent) => {
-            e.preventDefault();
-            if (!selectedNote || !(newComment ?? '').trim() || !user || !currentProfile) return;
-
-            try {
-                const commentId = id();
-                await db.transact([
-                    tx.comments[commentId].update({
-                        content: newComment,
-                        createdAt: new Date(),
-                    }),
-                    tx.comments[commentId].link({ commentNote: selectedNote.id }),
-                    tx.comments[commentId].link({ commentAuthor: currentProfile.id }),
-                ]);
-
-                setNewComment('');
-            } catch (error) {
-                console.error('Error adding comment:', error);
-            }
-        },
-        [selectedNote, newComment, user, currentProfile],
-    );
-    useEffect(() => {
-        if (lastCommentRef.current) {
-            lastCommentRef.current.scrollIntoView({ behavior: 'smooth' });
-        }
-    }, [selectedNote?.noteComments?.length]);
-
-    useEffect(() => {
-        if (lastCommentRef.current) {
-            // Delay 50ms untuk memastikan rendering selesai
-            const timeout = setTimeout(() => {
-                lastCommentRef.current?.scrollIntoView({ behavior: 'smooth' });
-            }, 50);
-            return () => clearTimeout(timeout);
-        }
-    }, [commentsQuery.data?.comments]);
-
-    // Memoized callbacks for event handlers
-    const handleNoteSelect = useCallback((note: Note) => {
-        setSelectedNote(note);
-    }, []);
-
-    const handleCloseModal = useCallback(() => {
-        setSelectedNote(null);
-        setEditingNote(null);
-        setEditingMode(false);
-    }, []);
-
-    const handleShowAddNote = useCallback(() => {
-        setShowAddNote(true);
-    }, []);
-
-    const handleToggleAddNote = useCallback(() => {
-        setShowAddNote(!showAddNote);
-    }, [showAddNote]);
+    const {
+        notes: filteredNotes,
+        isLoading,
+        error,
+        currentProfile,
+        user,
+        showAddNote,
+        editingMode,
+        selectedNote,
+        editingNote,
+        newNote,
+        newComment,
+        textareaRef,
+        lastCommentRef,
+        modalRef,
+        setShowAddNote,
+        setEditingMode,
+        setEditingNote,
+        setNewNote,
+        setNewComment,
+        handleNoteSelect,
+        handleCloseModal,
+        handleShowAddNote,
+        handleToggleAddNote,
+        addNote,
+        updateNote,
+        deleteNote,
+        addComment,
+        getProfilePictureUrl,
+    } = useNoteSection();
 
     if (isLoading) {
         return (
@@ -536,7 +327,12 @@ export default function NotesSection() {
             ) : (
                 <div className="scrollbar-hide flex space-x-4 overflow-x-auto pb-4">
                     {filteredNotes.map((note: any) => (
-                        <NoteCard key={note.id} note={note} onSelect={handleNoteSelect} />
+                        <NoteCard
+                            key={note.id}
+                            note={note}
+                            onSelect={handleNoteSelect}
+                            currentProfileId={currentProfile?.id}
+                        />
                     ))}
                 </div>
             )}
@@ -564,7 +360,7 @@ export default function NotesSection() {
                                         <textarea
                                             value={editingNote.content}
                                             onChange={(e) =>
-                                                setEditingNote({ ...editingNote, content: e.target.value })
+                                                setEditingNote({ ...editingNote, content: e.target.value } as Note)
                                             }
                                             className="min-h-[120px] w-full resize-none rounded-lg border p-3 text-base focus:border-transparent focus:ring-2 focus:ring-blue-500 focus:outline-none"
                                             rows={5}
@@ -579,7 +375,7 @@ export default function NotesSection() {
                                                 setEditingNote({
                                                     ...editingNote,
                                                     isPublic: !editingNote.isPublic,
-                                                })
+                                                } as Note)
                                             }
                                             className={`flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-3 transition-colors ${
                                                 editingNote.isPublic
@@ -623,7 +419,9 @@ export default function NotesSection() {
                                     {/* Author info - mobile optimized */}
                                     <div className="flex items-start gap-3">
                                         <Avatar className="h-12 w-12 shrink-0">
-                                            <AvatarImage src={selectedNote.noteAuthor?.[0]?.profilePicture} />
+                                            <AvatarImage
+                                                src={getProfilePictureUrl(selectedNote.noteAuthor?.[0]) || 'avatar'}
+                                            />
                                             <AvatarFallback>
                                                 {selectedNote.noteAuthor?.[0]?.fullName?.[0] ||
                                                     selectedNote.noteAuthor?.[0]?.firstName?.[0] ||

@@ -202,7 +202,7 @@ export default function Profile() {
                         <div className="relative mx-auto">
                             <Avatar className="mx-auto h-24 w-24">
                                 <AvatarImage
-                                    src={avatar || 'avatar'}
+                                    src={avatar || profile?.profilePicture}
                                     alt={profile?.fullName || user?.email || 'User'}
                                 />
                                 <AvatarFallback className="text-lg">

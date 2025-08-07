@@ -20,7 +20,9 @@ export const useUserProfile = () => {
 
     const profile = data?.profiles?.[0] ?? null;
 
-    const avatar = data?.$files?.find((file) => file.path === profile?.profilePicture)?.url;
+    const avatar = profile?.profilePicture?.startsWith('https://lh3.googleusercontent.com')
+        ? profile?.profilePicture
+        : data?.$files?.find((file) => file.path === profile?.profilePicture)?.url;
 
     return {
         avatar,
