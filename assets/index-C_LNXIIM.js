@@ -1,0 +1,1 @@
+import{j as s}from"./theme-provider-BcuaeRf2.js";const t="/scriblejot/assets/404-TCzqS-Pn.gif";function o(){return s.jsx("div",{className:"w-full h-full flex flex-col items-center justify-center",children:s.jsx("img",{src:t,alt:"Not Found",className:"w-1/2"})})}export{o as default};
